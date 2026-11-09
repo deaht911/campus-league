@@ -7,6 +7,7 @@ const morgan = require('morgan');
 const connectDB = require('./config/db');
 const { notFound, errorHandler } = require('./middlewares/errorHandler');
 const authRoutes = require('./routes/authRoutes');
+const userRoutes = require('./routes/userRoutes');
 
 const app = express();
 
@@ -40,6 +41,7 @@ app.get('/api/health', (req, res) => {
 // Las rutas de la API se montarán aquí en los siguientes commits
 app.use('/api/auth', authRoutes);
 // Las demás rutas se montarán aquí en los siguientes commits
+app.use('/api/users', userRoutes);
 
 // 404
 app.use(notFound);
