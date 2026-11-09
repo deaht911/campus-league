@@ -5,6 +5,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const connectDB = require('./config/db');
+const { notFound, errorHandler } = require('./middlewares/errorHandler');
 
 const app = express();
 
@@ -38,15 +39,9 @@ app.get('/api/health', (req, res) => {
 // Las rutas de la API se montarán aquí en los siguientes commits
 
 // 404
-app.use((req, res) => {
-  res.status(404).json({ success: false, message: `Ruta no encontrada: ${req.method} ${req.originalUrl}` });
-});
+app.use(notFound);
+app.use(errorHandler);
 
-// Manejador de errores básico (se reemplazará por el middleware errorHandler en C06)
-app.use((err, req, res, next) => {
-  console.error(err);
-  res.status(err.statusCode || 500).json({ success: false, message: err.message || 'Error interno del servidor' });
-});
 
 const PORT = process.env.PORT || 5000;
 
