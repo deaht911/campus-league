@@ -8,6 +8,7 @@ const connectDB = require('./config/db');
 const { notFound, errorHandler } = require('./middlewares/errorHandler');
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
+const teamRoutes = require('./routes/teamRoutes');
 
 const app = express();
 
@@ -42,6 +43,7 @@ app.get('/api/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 // Las demás rutas se montarán aquí en los siguientes commits
 app.use('/api/users', userRoutes);
+app.use('/api/teams', teamRoutes);
 
 // 404
 app.use(notFound);
