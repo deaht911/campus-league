@@ -1,1 +1,85 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap');
 @import "tailwindcss";
+
+@theme {
+  --color-cl-bg: #0b192c;
+  --color-cl-surface: #12233d;
+  --color-cl-surface-2: #1a2f4f;
+  --color-cl-border: #24405f;
+  --color-cl-accent: #00c16e;
+  --color-cl-accent-dark: #00a35d;
+  --color-cl-accent-light: #34e08f;
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  background-color: #0b192c;
+  color: #d1d5db;
+  font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+
+.font-display {
+  font-family: "Outfit", "Inter", sans-serif;
+}
+
+@layer components {
+  .card {
+    @apply rounded-2xl border border-[#24405f] bg-[#12233d] p-6 shadow-lg shadow-black/20;
+  }
+
+  .input-dark {
+    @apply w-full rounded-lg border border-[#2a3544] bg-[#0f1824] px-3 py-2.5 text-sm text-white placeholder-slate-500 outline-none transition focus:border-[#00c16e] focus:ring-2 focus:ring-[#00c16e]/40;
+  }
+
+  .label-dark {
+    @apply mb-1.5 block text-sm font-medium text-gray-300;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center rounded-lg bg-[#00c16e] px-4 py-2 text-sm font-semibold text-[#0b2545] transition hover:bg-[#34e08f] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#00c16e] disabled:cursor-not-allowed disabled:opacity-60;
+  }
+
+  .btn-outline {
+    @apply inline-flex items-center justify-center rounded-lg border border-slate-500 px-4 py-2 text-sm font-semibold text-white transition hover:border-[#00c16e] hover:text-[#34e08f] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#00c16e] disabled:cursor-not-allowed disabled:opacity-60;
+  }
+
+  .alert-error {
+    @apply rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-300;
+  }
+
+  .alert-ok {
+    @apply rounded-lg border border-[#00c16e]/40 bg-[#00c16e]/10 px-3 py-2 text-sm text-[#34e08f];
+  }
+
+  .badge {
+    @apply inline-flex items-center gap-2 rounded-full border border-[#00c16e]/40 bg-[#00c16e]/10 px-3 py-1 text-xs font-medium text-[#34e08f];
+  }
+
+  .table-wrap {
+    @apply overflow-x-auto rounded-xl border border-[#24405f];
+  }
+  .table-dark {
+    @apply w-full border-collapse text-left text-sm;
+  }
+  .table-dark thead {
+    @apply bg-[#1a2f4f] text-xs uppercase tracking-wide text-[#34e08f];
+  }
+  .table-dark th,
+  .table-dark td {
+    @apply px-4 py-3;
+  }
+  .table-dark tbody tr {
+    @apply border-t border-[#24405f] bg-[#12233d] text-slate-200;
+  }
+  .table-dark tbody tr:nth-child(even) {
+    @apply bg-[#0b192c];
+  }
+  .table-dark tbody tr:hover {
+    @apply bg-[#1a2f4f];
+  }
+}
