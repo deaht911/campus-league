@@ -264,6 +264,28 @@ components:
           items:
             $ref: '#/components/schemas/PlayerStat'
 
+  parameters:
+    IdParam:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+      description: ID del recurso (ObjectId de MongoDB)
+    UserIdParam:
+      name: userId
+      in: path
+      required: true
+      schema:
+        type: string
+      description: ID del usuario
+    RegIdParam:
+      name: regId
+      in: path
+      required: true
+      schema:
+        type: string
+      description: ID de la inscripción
   responses:
     BadRequest:
       description: Datos inválidos
@@ -486,3 +508,563 @@ paths:
                     $ref: '#/components/schemas/User'
         '401':
           $ref: '#/components/responses/Unauthorized'
+
+  /teams:
+    get:
+      tags: [Teams]
+      summary: Listar equipos activos (público)
+      parameters:
+        - { name: disciplina, in: query, schema: { type: string, enum: [futsal, basquetbol, voleibol, futbol, otra] } }
+        - { name: facultad, in: query, schema: { type: string } }
+        - { name: q, in: query, schema: { type: string }, description: Búsqueda por nombre }
+      responses:
+        '200':
+          description: Lista de equipos
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  count: { type: integer }
+                  teams:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Team'
+    post:
+      tags: [Teams]
+      summary: Crear equipo; el creador queda como capitán (RF-004)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [nombre, disciplina]
+              properties:
+                nombre: { type: string, minLength: 3, maxLength: 60, example: Los Tornillos }
+                disciplina: { type: string, enum: [futsal, basquetbol, voleibol, futbol, otra] }
+                facultad: { type: string, example: Ingeniería }
+      responses:
+        '201':
+          description: Equipo creado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  team:
+                    $ref: '#/components/schemas/Team'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /teams/mine:
+    get:
+      tags: [Teams]
+      summary: Equipos donde el usuario es capitán o jugador activo
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Mis equipos
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  count: { type: integer }
+                  teams:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Team'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /teams/{id}:
+    parameters:
+      - $ref: '#/components/parameters/IdParam'
+    get:
+      tags: [Teams]
+      summary: Detalle de un equipo (público)
+      responses:
+        '200':
+          description: Equipo con plantilla
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  team:
+                    $ref: '#/components/schemas/Team'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Teams]
+      summary: Editar equipo (solo capitán o administrador)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                nombre: { type: string }
+                facultad: { type: string }
+      responses:
+        '200':
+          description: Equipo actualizado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  team:
+                    $ref: '#/components/schemas/Team'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Teams]
+      summary: Dar de baja el equipo (baja lógica)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Equipo dado de baja
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /teams/{id}/players:
+    parameters:
+      - $ref: '#/components/parameters/IdParam'
+    post:
+      tags: [Teams]
+      summary: Agregar jugador a la plantilla por correo (RF-005, RF-006)
+      description: Valida que sea estudiante activo y que no pertenezca a otro equipo de la misma disciplina.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [correo]
+              properties:
+                correo: { type: string, format: email, example: jugador@uab.edu.bo }
+                numeroCamiseta: { type: integer, minimum: 0, maximum: 99 }
+                posicion: { type: string, example: Pivot }
+      responses:
+        '201':
+          description: Jugador agregado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  team:
+                    $ref: '#/components/schemas/Team'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /teams/{id}/players/{userId}:
+    parameters:
+      - $ref: '#/components/parameters/IdParam'
+      - $ref: '#/components/parameters/UserIdParam'
+    put:
+      tags: [Teams]
+      summary: Editar camiseta o posición de un jugador
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                numeroCamiseta: { type: integer, minimum: 0, maximum: 99 }
+                posicion: { type: string }
+      responses:
+        '200':
+          description: Jugador actualizado
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Teams]
+      summary: Dar de baja a un jugador (baja lógica)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Jugador dado de baja
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /tournaments:
+    get:
+      tags: [Tournaments]
+      summary: Listar torneos (público)
+      parameters:
+        - { name: disciplina, in: query, schema: { type: string } }
+        - { name: estado, in: query, schema: { type: string, enum: [borrador, inscripcion, inscripcion_cerrada, en_curso, finalizado, cancelado] } }
+      responses:
+        '200':
+          description: Lista de torneos
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  count: { type: integer }
+                  tournaments:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Tournament'
+    post:
+      tags: [Tournaments]
+      summary: Crear torneo (organizador o administrador) (RF-007)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [nombre, disciplina, formato, fechaInicio, fechaFin, inscripcionInicio, inscripcionFin, maxEquipos, reglamento]
+              properties:
+                nombre: { type: string, example: Copa UAB 2026 }
+                disciplina: { type: string, enum: [futsal, basquetbol, voleibol, futbol, otra] }
+                formato: { type: string, enum: [liga, eliminacion] }
+                fechaInicio: { type: string, format: date, example: '2026-11-20' }
+                fechaFin: { type: string, format: date, example: '2026-12-20' }
+                inscripcionInicio: { type: string, format: date, example: '2026-11-01' }
+                inscripcionFin: { type: string, format: date, example: '2026-11-30' }
+                maxEquipos: { type: integer, minimum: 4, maximum: 64, example: 8 }
+                minJugadores: { type: integer, example: 5 }
+                reglamento: { type: string, example: Reglamento oficial }
+                escenarios:
+                  type: array
+                  items: { type: string }
+                  example: [Coliseo UAB, Cancha techada]
+      responses:
+        '201':
+          description: Torneo creado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  tournament:
+                    $ref: '#/components/schemas/Tournament'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /tournaments/{id}:
+    parameters:
+      - $ref: '#/components/parameters/IdParam'
+    get:
+      tags: [Tournaments]
+      summary: Detalle de un torneo (público)
+      responses:
+        '200':
+          description: Torneo, equipos aprobados e indicador de inscripción abierta
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  tournament:
+                    $ref: '#/components/schemas/Tournament'
+                  equiposAprobados: { type: integer }
+                  inscripcionAbierta: { type: boolean }
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Tournaments]
+      summary: Editar torneo (organizador dueño o administrador)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Tournament'
+      responses:
+        '200':
+          description: Torneo actualizado
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /tournaments/{id}/status:
+    parameters:
+      - $ref: '#/components/parameters/IdParam'
+    patch:
+      tags: [Tournaments]
+      summary: Cambiar el estado del torneo
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [estado]
+              properties:
+                estado: { type: string, enum: [borrador, inscripcion, inscripcion_cerrada, en_curso, finalizado, cancelado] }
+      responses:
+        '200':
+          description: Estado actualizado
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /tournaments/{id}/registrations:
+    parameters:
+      - $ref: '#/components/parameters/IdParam'
+    get:
+      tags: [Tournaments]
+      summary: Listar inscripciones (organizador ve todas; capitán solo las suyas)
+      security:
+        - bearerAuth: []
+      parameters:
+        - { name: estado, in: query, schema: { type: string, enum: [pendiente, aprobada, rechazada, lista_espera, cancelada] } }
+      responses:
+        '200':
+          description: Inscripciones del torneo
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  count: { type: integer }
+                  registrations:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Registration'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      tags: [Tournaments]
+      summary: Inscribir equipo en el torneo (CU-05, RF-008)
+      description: Solo dentro del período de inscripción, con plantilla mínima y jugadores habilitados. Sin cupos queda en lista de espera.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [equipo, aceptaReglamento]
+              properties:
+                equipo: { type: string, description: ID del equipo }
+                aceptaReglamento: { type: boolean, example: true }
+      responses:
+        '201':
+          description: Inscripción registrada (pendiente o lista de espera)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  message: { type: string }
+                  registration:
+                    $ref: '#/components/schemas/Registration'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /tournaments/{id}/registrations/{regId}:
+    parameters:
+      - $ref: '#/components/parameters/IdParam'
+      - $ref: '#/components/parameters/RegIdParam'
+    patch:
+      tags: [Tournaments]
+      summary: Aprobar o rechazar una inscripción
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [estado]
+              properties:
+                estado: { type: string, enum: [aprobada, rechazada, pendiente] }
+                motivoRechazo: { type: string, description: Obligatorio al rechazar }
+      responses:
+        '200':
+          description: Inscripción revisada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  registration:
+                    $ref: '#/components/schemas/Registration'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /tournaments/{id}/fixture:
+    parameters:
+      - $ref: '#/components/parameters/IdParam'
+    post:
+      tags: [Tournaments]
+      summary: Generar calendario en modo borrador (CU-07, RF-009)
+      description: Requiere inscripción cerrada y al menos 4 equipos aprobados. Evita choques de escenario y de equipo.
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                escenarios:
+                  type: array
+                  items: { type: string }
+                horarios:
+                  type: array
+                  items: { type: string, example: '18:00' }
+                fechaInicio: { type: string, format: date }
+                fechaFin: { type: string, format: date }
+                dobleVuelta: { type: boolean, description: Solo formato liga }
+                tipoDias: { type: string, enum: [habiles, todos] }
+      responses:
+        '201':
+          description: Calendario generado (borrador)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  message: { type: string }
+                  total: { type: integer }
+                  matches:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Match'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+    delete:
+      tags: [Tournaments]
+      summary: Descartar el calendario en borrador
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Borrador descartado
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /tournaments/{id}/fixture/publish:
+    parameters:
+      - $ref: '#/components/parameters/IdParam'
+    post:
+      tags: [Tournaments]
+      summary: Publicar el calendario en el portal público
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Calendario publicado
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
