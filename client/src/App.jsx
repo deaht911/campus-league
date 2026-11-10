@@ -4,6 +4,8 @@ import Navbar from './components/Navbar';
 import ProtectedRoute from './components/ProtectedRoute';
 import LoginPage from './pages/auth/LoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
+import Home from './pages/Home';
+import Tournaments from './pages/Tournaments';
 
 function Pendiente({ titulo }) {
   return (
@@ -37,8 +39,8 @@ function Layout() {
       {!ocultarNavbar && <Navbar />}
       <main>
         <Routes>
-          <Route path="/" element={<Pendiente titulo="Inicio" />} />
-          <Route path="/torneos" element={<Pendiente titulo="Torneos" />} />
+          <Route path="/" element={<Home />} />
+          <Route path="/torneos" element={<Tournaments />} />
           <Route path="/calendario" element={<Pendiente titulo="Calendario y resultados" />} />
           <Route path="/posiciones" element={<Pendiente titulo="Tabla de posiciones" />} />
           <Route path="/login" element={<LoginPage />} />

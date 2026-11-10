@@ -44,3 +44,14 @@ export const getErrorMessage = (error) => {
 };
 
 export default api;
+
+// Torneos públicos (no requieren sesión)
+export const getTournaments = (params = {}) =>
+  api.get('/tournaments', { params }).then((res) => res.data);
+
+export const getTournament = (id) =>
+  api.get(`/tournaments/${id}`).then((res) => res.data);
+
+// Partidos públicos (solo torneos con calendario publicado)
+export const getMatches = (params = {}) =>
+  api.get('/matches', { params }).then((res) => res.data);
