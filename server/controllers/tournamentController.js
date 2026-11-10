@@ -221,7 +221,11 @@ exports.listRegistrations = async (req, res, next) => {
     }
 
     const inscripciones = await Registration.find(filtro)
-      .populate('equipo', 'nombre facultad disciplina')
+      .populate({
+        path: 'equipo',
+        select: 'nombre facultad disciplina jugadores',
+        populate: { path: 'jugadores.usuario', select: 'nombre correo activo' }
+      })
       .populate('inscritoPor', 'nombre correo')
       .sort({ createdAt: 1 });
 

@@ -10,6 +10,7 @@ const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
 const teamRoutes = require('./routes/teamRoutes');
 const tournamentRoutes = require('./routes/tournamentRoutes');
+const matchRoutes = require('./routes/matchRoutes');
 
 const app = express();
 
@@ -46,6 +47,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/teams', teamRoutes);
 app.use('/api/tournaments', tournamentRoutes);
+app.use('/api/matches', matchRoutes);
+
 
 // 404
 app.use(notFound);
