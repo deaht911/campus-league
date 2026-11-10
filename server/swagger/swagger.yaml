@@ -1,0 +1,488 @@
+openapi: 3.0.3
+info:
+  title: Campus League API
+  description: >
+    API REST para la gestión de torneos deportivos universitarios (UAB).
+    Autenticación con JWT (Bearer) y control de acceso por roles (RBAC).
+  version: 1.0.0
+servers:
+  - url: http://localhost:5000/api
+    description: Desarrollo local
+  - url: https://tu-api-en-produccion.com/api
+    description: Producción
+tags:
+  - name: Auth
+    description: Registro, verificación OTP, login y sesión activa
+  - name: Users
+    description: Administración de usuarios y roles
+  - name: Teams
+    description: Equipos y plantillas
+  - name: Tournaments
+    description: Torneos, inscripciones y calendario
+  - name: Matches
+    description: Partidos, actas, tabla de posiciones y goleadores
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Token JWT obtenido en /auth/login o /auth/verify-otp (expira en 30 min)
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: Descripción del error
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              campo:
+                type: string
+              mensaje:
+                type: string
+
+    User:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: 6af15d3572f1ce403f48a2b5
+        nombre:
+          type: string
+          example: Mateo Rivas
+        correo:
+          type: string
+          format: email
+          example: mateo@uab.edu.bo
+        rol:
+          type: string
+          enum: [jugador, capitan, organizador, arbitro, administrador]
+        facultad:
+          type: string
+          example: Ingeniería
+        codigoEstudiantil:
+          type: string
+          example: UAB-0001
+        estudianteActivo:
+          type: boolean
+        verificado:
+          type: boolean
+        activo:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    AuthResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        token:
+          type: string
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        user:
+          $ref: '#/components/schemas/User'
+
+    Team:
+      type: object
+      properties:
+        _id:
+          type: string
+        nombre:
+          type: string
+          example: Los Tornillos
+        disciplina:
+          type: string
+          enum: [futsal, basquetbol, voleibol, futbol, otra]
+        facultad:
+          type: string
+        capitan:
+          $ref: '#/components/schemas/User'
+        jugadores:
+          type: array
+          items:
+            $ref: '#/components/schemas/Player'
+        activo:
+          type: boolean
+        totalJugadoresActivos:
+          type: integer
+
+    Player:
+      type: object
+      properties:
+        usuario:
+          $ref: '#/components/schemas/User'
+        numeroCamiseta:
+          type: integer
+          minimum: 0
+          maximum: 99
+        posicion:
+          type: string
+        activo:
+          type: boolean
+        fechaAlta:
+          type: string
+          format: date-time
+
+    Tournament:
+      type: object
+      properties:
+        _id:
+          type: string
+        nombre:
+          type: string
+          example: Copa UAB 2026
+        disciplina:
+          type: string
+          enum: [futsal, basquetbol, voleibol, futbol, otra]
+        formato:
+          type: string
+          enum: [liga, eliminacion]
+        fechaInicio:
+          type: string
+          format: date-time
+        fechaFin:
+          type: string
+          format: date-time
+        inscripcionInicio:
+          type: string
+          format: date-time
+        inscripcionFin:
+          type: string
+          format: date-time
+        maxEquipos:
+          type: integer
+          minimum: 4
+          maximum: 64
+        minJugadores:
+          type: integer
+        reglamento:
+          type: string
+        escenarios:
+          type: array
+          items:
+            type: string
+        estado:
+          type: string
+          enum: [borrador, inscripcion, inscripcion_cerrada, en_curso, finalizado, cancelado]
+        calendarioPublicado:
+          type: boolean
+        organizador:
+          type: string
+
+    Registration:
+      type: object
+      properties:
+        _id:
+          type: string
+        torneo:
+          type: string
+        equipo:
+          type: string
+        inscritoPor:
+          type: string
+        estado:
+          type: string
+          enum: [pendiente, aprobada, rechazada, lista_espera, cancelada]
+        aceptaReglamento:
+          type: boolean
+        motivoRechazo:
+          type: string
+
+    PlayerStat:
+      type: object
+      properties:
+        jugador:
+          type: string
+        equipo:
+          type: string
+        goles:
+          type: integer
+          minimum: 0
+        faltas:
+          type: integer
+          minimum: 0
+        tarjetas:
+          type: array
+          items:
+            type: string
+            enum: [amarilla, roja]
+        destacado:
+          type: boolean
+
+    Match:
+      type: object
+      properties:
+        _id:
+          type: string
+        torneo:
+          type: string
+        local:
+          type: string
+        visitante:
+          type: string
+        fase:
+          type: string
+          enum: [liga, octavos, cuartos, semifinal, final, tercer_puesto]
+        jornada:
+          type: integer
+        fecha:
+          type: string
+          format: date-time
+        escenario:
+          type: string
+        arbitro:
+          type: string
+        estado:
+          type: string
+          enum: [programado, en_juego, pendiente_confirmacion, finalizado, reprogramado, cancelado]
+        marcador:
+          type: object
+          properties:
+            local:
+              type: integer
+            visitante:
+              type: integer
+        walkover:
+          type: boolean
+        estadisticas:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlayerStat'
+
+  responses:
+    BadRequest:
+      description: Datos inválidos
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Token ausente, inválido o expirado
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Forbidden:
+      description: El rol no tiene permiso para esta acción
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Recurso no encontrado
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Conflict:
+      description: Conflicto con el estado actual del recurso
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+paths:
+  /health:
+    get:
+      tags: [Auth]
+      summary: Estado del servicio
+      responses:
+        '200':
+          description: API operativa
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  service:
+                    type: string
+                    example: campus-league-api
+                  timestamp:
+                    type: string
+                    format: date-time
+
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Registrar usuario con correo institucional (RF-001)
+      description: Crea la cuenta con rol jugador y genera un OTP. En desarrollo el código se devuelve en `otpDesarrollo`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [nombre, correo, password]
+              properties:
+                nombre:
+                  type: string
+                  minLength: 3
+                  maxLength: 100
+                  example: Mateo Rivas
+                correo:
+                  type: string
+                  format: email
+                  example: mateo@uab.edu.bo
+                password:
+                  type: string
+                  minLength: 8
+                  example: Campus2026!
+                facultad:
+                  type: string
+                  example: Ingeniería
+                codigoEstudiantil:
+                  type: string
+                  example: UAB-0100
+      responses:
+        '201':
+          description: Registro exitoso, pendiente de verificación OTP
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  user:
+                    $ref: '#/components/schemas/User'
+                  otpDesarrollo:
+                    type: string
+                    description: Solo en entorno no productivo
+                    example: '123456'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /auth/verify-otp:
+    post:
+      tags: [Auth]
+      summary: Verificar cuenta con código OTP
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [correo, codigo]
+              properties:
+                correo:
+                  type: string
+                  format: email
+                codigo:
+                  type: string
+                  pattern: '^\d{6}$'
+                  example: '123456'
+      responses:
+        '200':
+          description: Cuenta verificada, devuelve el token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /auth/resend-otp:
+    post:
+      tags: [Auth]
+      summary: Reenviar código OTP
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [correo]
+              properties:
+                correo:
+                  type: string
+                  format: email
+      responses:
+        '200':
+          description: Respuesta genérica (no revela si el correo existe)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Iniciar sesión (RF-002)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [correo, password]
+              properties:
+                correo:
+                  type: string
+                  format: email
+                  example: admin@uab.edu.bo
+                password:
+                  type: string
+                  example: Campus2026!
+      responses:
+        '200':
+          description: Autenticación exitosa
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: Usuario de la sesión activa
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Datos del usuario autenticado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  user:
+                    $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
