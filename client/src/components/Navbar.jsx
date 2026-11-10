@@ -10,6 +10,15 @@ export default function Navbar() {
     navigate('/login');
   };
 
+  const iniciales = user?.nombre
+    ? user.nombre
+        .split(' ')
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((p) => p[0].toUpperCase())
+        .join('')
+    : '';
+
   return (
     <nav className="border-b border-[#24405f] bg-[#0B2545]">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
@@ -25,7 +34,7 @@ export default function Navbar() {
           <Link to="/calendario" className="hover:text-white">Calendario</Link>
           <Link to="/posiciones" className="hover:text-white">Posiciones</Link>
           {user && hasRole('jugador', 'capitan', 'administrador') && (
-            <Link to="/mi-equipo" className="text-[#34E08F] hover:underline">
+            <Link to="/mi-equipo" className="hover:text-white">
               Mi Equipo
             </Link>
           )}
@@ -34,7 +43,16 @@ export default function Navbar() {
         <div className="flex items-center gap-3">
           {user ? (
             <>
-              <span className="text-sm font-semibold text-white">{user.nombre}</span>
+              <Link
+                to="/perfil"
+                className="flex items-center gap-2 rounded-lg px-2 py-1 text-sm font-semibold text-white transition hover:bg-white/10"
+                title="Ver Perfil"
+              >
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#00C16E] text-xs font-bold text-[#0B2545]">
+                  {iniciales}
+                </span>
+                <span>{user.nombre}</span>
+              </Link>
               <button
                 type="button"
                 onClick={handleLogout}

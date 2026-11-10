@@ -9,6 +9,7 @@ import Tournaments from './pages/Tournaments';
 import Calendar from './pages/Calendar';
 import Standings from './pages/Standings';
 import MyTeam from './pages/MyTeam';
+import UserProfile from './pages/UserProfile';
 
 function Pendiente({ titulo }) {
   return (
@@ -50,7 +51,7 @@ function Layout() {
           <Route path="/registro" element={<RegisterPage />} />
 
           <Route element={<ProtectedRoute />}>
-            <Route path="/perfil" element={<Pendiente titulo="Mi perfil" />} />
+            <Route path="/perfil" element={<UserProfile />} />
           </Route>
           <Route element={<ProtectedRoute roles={['jugador', 'capitan', 'administrador']} />}>
             <Route path="/mi-equipo" element={<MyTeam />} />

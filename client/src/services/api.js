@@ -85,3 +85,11 @@ export const removePlayer = (teamId, userId) =>
 // Inscripción de un equipo en un torneo
 export const registerTeam = (torneoId, datos) =>
   api.post(`/tournaments/${torneoId}/registrations`, datos).then((res) => res.data);
+
+// Perfil propio (requiere sesión)
+export const updateProfile = (datos) =>
+  api.put('/users/me', datos).then((res) => res.data);
+
+// Estadísticas individuales de un jugador (públicas)
+export const getPlayerStats = (userId, params = {}) =>
+  api.get(`/matches/players/${userId}/stats`, { params }).then((res) => res.data);
