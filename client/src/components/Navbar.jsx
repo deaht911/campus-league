@@ -2,64 +2,53 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 export default function Navbar() {
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, logout, hasRole } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => {
     logout();
-    navigate('/');
+    navigate('/login');
   };
 
   return (
-    <nav className="border-b border-[#24405f] bg-[#0B2545] text-white">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
-        {/* Logo */}
-        <Link to="/" className="flex items-center gap-2">
-          <span className="font-display flex h-9 w-9 items-center justify-center rounded-lg bg-[#00C16E] text-sm font-extrabold text-[#0B2545]">
+    <nav className="border-b border-[#24405f] bg-[#0B2545]">
+      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
+        <Link to="/" className="flex items-center gap-2 font-display text-xl font-bold text-white">
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#00C16E] text-xs font-black text-[#0B2545]">
             CL
           </span>
-          <span className="font-display text-lg font-semibold text-white">Campus League</span>
+          Campus League
         </Link>
 
-        {/* Enlaces de Navegación */}
-        <div className="hidden items-center gap-6 md:flex">
-          <Link to="/torneos" className="text-sm font-medium text-gray-300 transition hover:text-[#00C16E]">
-            Torneos
-          </Link>
-          <Link to="/calendario" className="text-sm font-medium text-gray-300 transition hover:text-[#00C16E]">
-            Calendario
-          </Link>
-          <Link to="/posiciones" className="text-sm font-medium text-gray-300 transition hover:text-[#00C16E]">
-            Posiciones
-          </Link>
+        <div className="flex items-center gap-6 text-sm font-medium text-gray-300">
+          <Link to="/torneos" className="hover:text-white">Torneos</Link>
+          <Link to="/calendario" className="hover:text-white">Calendario</Link>
+          <Link to="/posiciones" className="hover:text-white">Posiciones</Link>
+          {user && hasRole('jugador', 'capitan', 'administrador') && (
+            <Link to="/mi-equipo" className="text-[#34E08F] hover:underline">
+              Mi Equipo
+            </Link>
+          )}
         </div>
 
-        {/* Auth Buttons / User info */}
         <div className="flex items-center gap-3">
-          {isAuthenticated ? (
-            <div className="flex items-center gap-4">
-              <span className="text-sm font-medium text-gray-200">
-                {user?.nombre || user?.correo}
-              </span>
+          {user ? (
+            <>
+              <span className="text-sm font-semibold text-white">{user.nombre}</span>
               <button
+                type="button"
                 onClick={handleLogout}
-                className="rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-1.5 text-xs font-semibold text-red-300 transition hover:bg-red-500/20"
+                className="rounded-lg border border-red-500/40 px-3 py-1.5 text-xs font-semibold text-red-300 hover:bg-red-500/10"
               >
                 Cerrar Sesión
               </button>
-            </div>
+            </>
           ) : (
             <>
-              <Link
-                to="/login"
-                className="text-sm font-medium text-gray-300 transition hover:text-[#00C16E]"
-              >
+              <Link to="/login" className="text-sm text-gray-300 hover:text-white">
                 Iniciar Sesión
               </Link>
-              <Link
-                to="/registro"
-                className="rounded-lg bg-[#00C16E] px-4 py-2 text-sm font-semibold text-[#0B2545] transition hover:bg-[#34E08F]"
-              >
+              <Link to="/registro" className="btn-primary px-4 py-1.5 text-xs">
                 Registrarse
               </Link>
             </>

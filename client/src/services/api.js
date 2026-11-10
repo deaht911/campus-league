@@ -62,3 +62,26 @@ export const getStandings = (torneoId) =>
 
 export const getScorers = (torneoId, params = {}) =>
   api.get(`/matches/scorers/${torneoId}`, { params }).then((res) => res.data);
+
+// Equipos y plantilla (requieren sesión)
+export const getMyTeams = () =>
+  api.get('/teams/mine').then((res) => res.data);
+
+export const createTeam = (datos) =>
+  api.post('/teams', datos).then((res) => res.data);
+
+export const deleteTeam = (id) =>
+  api.delete(`/teams/${id}`).then((res) => res.data);
+
+export const addPlayer = (teamId, datos) =>
+  api.post(`/teams/${teamId}/players`, datos).then((res) => res.data);
+
+export const updatePlayer = (teamId, userId, datos) =>
+  api.put(`/teams/${teamId}/players/${userId}`, datos).then((res) => res.data);
+
+export const removePlayer = (teamId, userId) =>
+  api.delete(`/teams/${teamId}/players/${userId}`).then((res) => res.data);
+
+// Inscripción de un equipo en un torneo
+export const registerTeam = (torneoId, datos) =>
+  api.post(`/tournaments/${torneoId}/registrations`, datos).then((res) => res.data);
