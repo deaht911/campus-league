@@ -55,3 +55,10 @@ export const getTournament = (id) =>
 // Partidos públicos (solo torneos con calendario publicado)
 export const getMatches = (params = {}) =>
   api.get('/matches', { params }).then((res) => res.data);
+
+// Tabla de posiciones y goleadores de un torneo (públicos)
+export const getStandings = (torneoId) =>
+  api.get(`/matches/standings/${torneoId}`).then((res) => res.data);
+
+export const getScorers = (torneoId, params = {}) =>
+  api.get(`/matches/scorers/${torneoId}`, { params }).then((res) => res.data);

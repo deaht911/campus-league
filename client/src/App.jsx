@@ -6,6 +6,8 @@ import LoginPage from './pages/auth/LoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
 import Home from './pages/Home';
 import Tournaments from './pages/Tournaments';
+import Calendar from './pages/Calendar';
+import Standings from './pages/Standings';
 
 function Pendiente({ titulo }) {
   return (
@@ -41,8 +43,8 @@ function Layout() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/torneos" element={<Tournaments />} />
-          <Route path="/calendario" element={<Pendiente titulo="Calendario y resultados" />} />
-          <Route path="/posiciones" element={<Pendiente titulo="Tabla de posiciones" />} />
+          <Route path="/calendario" element={<Calendar />} />
+          <Route path="/posiciones" element={<Standings />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/registro" element={<RegisterPage />} />
 
