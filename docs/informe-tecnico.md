@@ -54,8 +54,6 @@ Estructura del servidor: `models/` (esquemas y validadores), `controllers/` (ló
 | RF-013 Goleadores y estadísticas | CU-11 | `GET /matches/scorers/:torneoId`, `GET /matches/players/:userId/stats` | Posiciones, Perfil |
 | Consulta pública de torneos y calendario | CU-10 | `GET /tournaments`, `GET /matches` | Inicio, Torneos, Calendario |
 
-La numeración de RF y CU sigue el documento de la primera entrega; ajústala si algún identificador difiere.
-
 ## 5. Matriz de endpoints por rol
 
 Leyenda: P = público, S = cualquier sesión, J = jugador, C = capitán, O = organizador, A = árbitro, Adm = administrador.
@@ -129,7 +127,7 @@ Pruebas manuales sobre los datos del seed (`npm run seed`), con lint y build de 
 
 Pendiente de documentar en Swagger: `GET /users/referees`.
 
-## 9.1 Limitaciones conocidas
+### 9.1 Limitaciones conocidas
 
 - La duración de los partidos es fija (90 minutos); una duración por disciplina requeriría un campo en el modelo de torneo.
 - El OTP se muestra en la respuesta en desarrollo; en producción requiere integrar un servicio de correo.
@@ -140,7 +138,41 @@ Pendiente de documentar en Swagger: `GET /users/referees`.
 
 Ver [README](../README.md). Resumen: `npm run install:all`, copiar los `.env.example`, `npm run seed` y `npm run dev`.
 
-## 11. Equipo
+## 11. Capturas
+
+**Calendario de partidos**
+
+![Calendario de partidos](screenshots/calendario.png)
+
+**Tabla de posiciones**
+
+![Tabla de posiciones](screenshots/posiciones.png)
+
+**Panel del organizador**
+
+![Panel del organizador](screenshots/panel-organizador.png)
+
+**Panel del árbitro**
+
+![Panel del árbitro](screenshots/panel-arbitro.png)
+
+**Gestión de equipo (capitán)**
+
+![Mi equipo](screenshots/mi-equipo.png)
+
+**Perfil de usuario**
+
+![Perfil](screenshots/perfil.png)
+
+**Swagger UI (OpenAPI 3.0)**
+
+![Swagger UI](screenshots/swagger-ui.png)
+
+**Swagger: autorización con JWT**
+
+![Swagger Authorize](screenshots/swagger-authorize.png)
+
+## 12. Equipo
 
 | Integrante | Usuario | Commits |
 |---|---|---|
