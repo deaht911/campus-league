@@ -11,6 +11,7 @@ import Standings from './pages/Standings';
 import MyTeam from './pages/MyTeam';
 import UserProfile from './pages/UserProfile';
 import OrganizerPanel from './pages/panel/OrganizerPanel';
+import RefereePanel from './pages/panel/RefereePanel';
 
 function Pendiente({ titulo }) {
   return (
@@ -61,7 +62,7 @@ function Layout() {
             <Route path="/panel/organizador" element={<OrganizerPanel />} />
           </Route>
           <Route element={<ProtectedRoute roles={['arbitro', 'administrador']} />}>
-            <Route path="/panel/arbitro" element={<Pendiente titulo="Panel del árbitro" />} />
+            <Route path="/panel/arbitro" element={<RefereePanel />} />
           </Route>
           <Route element={<ProtectedRoute roles={['administrador']} />}>
             <Route path="/panel/admin" element={<Pendiente titulo="Panel de administración" />} />

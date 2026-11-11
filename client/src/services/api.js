@@ -130,3 +130,19 @@ export const getUsers = (params = {}) =>
 // Árbitros activos (organizador / administrador)
 export const getReferees = () =>
   api.get('/users/referees').then((res) => res.data);
+
+// Árbitro: partidos asignados y acta digital
+export const getMyMatches = (params = {}) =>
+  api.get('/matches/mine', { params }).then((res) => res.data);
+
+export const getMatch = (id) =>
+  api.get(`/matches/${id}`).then((res) => res.data);
+
+export const getTeam = (id) =>
+  api.get(`/teams/${id}`).then((res) => res.data);
+
+export const submitResult = (matchId, datos) =>
+  api.put(`/matches/${matchId}/result`, datos).then((res) => res.data);
+
+export const reopenMatch = (matchId) =>
+  api.patch(`/matches/${matchId}/reopen`).then((res) => res.data);
