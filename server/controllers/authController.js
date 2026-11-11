@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const { notificarOTP } = require('../services/mailer');
 
 const signToken = (user) =>
   jwt.sign({ id: user._id, rol: user.rol }, process.env.JWT_SECRET, {
@@ -24,6 +25,7 @@ exports.register = async (req, res, next) => {
 
     const codigo = await user.generarOTP();
     await user.save();
+    notificarOTP(user, codigo);
 
     // En producción el código se enviaría por correo institucional (CU-13).
     // En desarrollo se devuelve en la respuesta para poder probar el flujo.
@@ -32,7 +34,7 @@ exports.register = async (req, res, next) => {
       message: 'Registro exitoso. Verifique su correo con el código OTP enviado',
       user,
     };
-    if (process.env.NODE_ENV !== 'production') {
+    if (process.env.NODE_ENV !== 'production' && !process.env.SMTP_HOST) {
       respuesta.otpDesarrollo = codigo;
       console.log(`[OTP] ${user.correo}: ${codigo}`);
     }
@@ -84,8 +86,9 @@ exports.resendOTP = async (req, res, next) => {
 
     const codigo = await user.generarOTP();
     await user.save();
+    notificarOTP(user, codigo);
 
-    if (process.env.NODE_ENV !== 'production') {
+    if (process.env.NODE_ENV !== 'production' && !process.env.SMTP_HOST) {
       console.log(`[OTP] ${user.correo}: ${codigo}`);
       return res.json({ ...generica, otpDesarrollo: codigo });
     }
@@ -120,4 +123,47 @@ exports.login = async (req, res, next) => {
 // GET /api/auth/me
 exports.me = async (req, res) => {
   res.json({ success: true, user: req.user });
+};
+// POST /api/auth/forgot-password (RF-002): envía un OTP para restablecer la contraseña
+exports.forgotPassword = async (req, res, next) => {
+  try {
+    const { correo } = req.body;
+    const user = await User.findOne({ correo: String(correo).toLowerCase() });
+
+    // Respuesta genérica para no revelar si el correo existe
+    const generica = { success: true, message: 'Si el correo está registrado, se envió un código para restablecer la contraseña' };
+    if (!user || !user.activo || !user.verificado) return res.json(generica);
+
+    const codigo = await user.generarOTP();
+    await user.save();
+    notificarOTP(user, codigo, 'restablecer su contraseña');
+
+    if (process.env.NODE_ENV !== 'production' && !process.env.SMTP_HOST) {
+      console.log(`[RESET] ${user.correo}: ${codigo}`);
+      return res.json({ ...generica, otpDesarrollo: codigo });
+    }
+    res.json(generica);
+  } catch (error) {
+    next(error);
+  }
+};
+
+// POST /api/auth/reset-password (RF-002): valida el OTP y fija la nueva contraseña
+exports.resetPassword = async (req, res, next) => {
+  try {
+    const { correo, codigo, password } = req.body;
+    const user = await User.findOne({ correo: String(correo).toLowerCase() }).select('+otp.codigo +otp.expira +password');
+
+    if (!user || !user.activo || !(await user.verificarOTP(codigo))) {
+      return res.status(400).json({ success: false, message: 'Código inválido o expirado' });
+    }
+
+    user.password = password;
+    user.otp = undefined;
+    await user.save();
+
+    res.json({ success: true, message: 'Contraseña actualizada. Ya puede iniciar sesión' });
+  } catch (error) {
+    next(error);
+  }
 };

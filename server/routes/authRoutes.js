@@ -1,9 +1,21 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
-const { register, verifyOTP, resendOTP, login, me } = require('../controllers/authController');
+const rateLimit = require('express-rate-limit');
+const { register, verifyOTP, resendOTP, login, me, forgotPassword, resetPassword } = require('../controllers/authController');
 const { protect } = require('../middlewares/auth');
 
 const router = express.Router();
+
+// Limita intentos contra fuerza bruta en las rutas de autenticación
+const limitador = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: parseInt(process.env.RATE_LIMIT_MAX, 10) || 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: () => process.env.NODE_ENV === 'test',
+  message: { success: false, message: 'Demasiados intentos. Intente nuevamente en unos minutos' },
+});
+router.use(limitador);
 
 const validar = (req, res, next) => {
   const errores = validationResult(req);
@@ -47,6 +59,19 @@ router.post(
   [correoValido, body('password').isString().notEmpty().withMessage('La contraseña es obligatoria')],
   validar,
   login
+);
+
+router.post('/forgot-password', [correoValido], validar, forgotPassword);
+
+router.post(
+  '/reset-password',
+  [
+    correoValido,
+    body('codigo').isString().trim().matches(/^\d{6}$/).withMessage('El código debe tener 6 dígitos'),
+    body('password').isString().isLength({ min: 8 }).withMessage('La contraseña debe tener al menos 8 caracteres'),
+  ],
+  validar,
+  resetPassword
 );
 
 router.get('/me', protect, me);

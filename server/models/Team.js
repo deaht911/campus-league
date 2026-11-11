@@ -100,12 +100,10 @@ teamSchema.index({ capitan: 1 });
 teamSchema.index({ disciplina: 1, activo: 1 });
 teamSchema.index({ 'jugadores.usuario': 1, disciplina: 1 });
 
-// Si tienes un virtual para jugadores activos o formateados:
-teamSchema.virtual('jugadoresActivos').get(function () {
-  return (this.jugadores || []).filter((j) => j && (j.activo === undefined || j.activo));
+// Cantidad de jugadores activos en la plantilla
+teamSchema.virtual('totalJugadoresActivos').get(function () {
+  return (this.jugadores || []).filter((j) => j && j.activo).length;
 });
-
-// O si la propiedad virtual se llama diferente, asegúrate de que use (this.jugadores || []):
 
 // Indica si un usuario pertenece activamente a la plantilla
 teamSchema.methods.tieneJugador = function (usuarioId) {

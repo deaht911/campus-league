@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
+const { campoCifrado, descifrar } = require('../services/crypto');
 
 const ROLES = ['jugador', 'capitan', 'organizador', 'arbitro', 'administrador'];
 const EMAIL_REGEX = /^[a-z0-9._%+-]+@uab\.edu\.bo$/i;
@@ -42,12 +43,16 @@ const userSchema = new mongoose.Schema(
       trim: true,
       maxlength: [100, 'La facultad no puede superar 100 caracteres'],
     },
+    // Dato personal: se guarda cifrado con AES-256-GCM (RNF-002) y se lee descifrado
     codigoEstudiantil: {
       type: String,
-      trim: true,
       unique: true,
       sparse: true,
-      match: [/^[A-Za-z0-9-]{4,20}$/, 'Código estudiantil no válido'],
+      ...campoCifrado,
+      validate: {
+        validator: (v) => !v || /^[A-Za-z0-9-]{4,20}$/.test(descifrar(v)),
+        message: 'Código estudiantil no válido',
+      },
     },
     estudianteActivo: {
       type: Boolean,
@@ -106,7 +111,9 @@ userSchema.methods.verificarOTP = async function (codigoIngresado) {
 
 // Limpia campos sensibles al serializar
 userSchema.set('toJSON', {
+  getters: true,
   transform: (doc, ret) => {
+    delete ret.id;
     delete ret.password;
     delete ret.otp;
     delete ret.__v;

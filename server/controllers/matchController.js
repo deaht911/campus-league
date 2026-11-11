@@ -4,6 +4,7 @@ const Tournament = require('../models/Tournament');
 const Registration = require('../models/Registration');
 const Team = require('../models/Team');
 const User = require('../models/User');
+const { notificarReprogramacion } = require('../services/mailer');
 
 const HORA_MS = 60 * 60 * 1000;
 // Duración estimada de un partido: sirve para detectar solapamientos de horario
@@ -95,14 +96,8 @@ exports.getMatch = async (req, res, next) => {
   }
 };
 
-// GET /api/matches/standings/:torneoId (RF-012)
-exports.standings = async (req, res, next) => {
-  try {
-    const torneo = await Tournament.findById(req.params.torneoId);
-    if (!torneo) {
-      return res.status(404).json({ success: false, message: 'Torneo no encontrado' });
-    }
-
+// Calcula la tabla de posiciones de un torneo con los partidos finalizados (RF-012)
+const calcularStandings = async (torneo) => {
     const inscripciones = await Registration.find({ torneo: torneo._id, estado: 'aprobada' }).populate(
       'equipo',
       'nombre facultad'
@@ -138,6 +133,18 @@ exports.standings = async (req, res, next) => {
       .map((f) => ({ ...f, dg: f.gf - f.gc }))
       .sort((a, b) => b.pts - a.pts || b.dg - a.dg || b.gf - a.gf || a.equipo.nombre.localeCompare(b.equipo.nombre))
       .map((f, i) => ({ posicion: i + 1, ...f }));
+  return ordenada;
+};
+
+// GET /api/matches/standings/:torneoId (RF-012)
+exports.standings = async (req, res, next) => {
+  try {
+    const torneo = await Tournament.findById(req.params.torneoId);
+    if (!torneo) {
+      return res.status(404).json({ success: false, message: 'Torneo no encontrado' });
+    }
+
+    const ordenada = await calcularStandings(torneo);
 
     res.json({ success: true, torneo: { _id: torneo._id, nombre: torneo.nombre }, standings: ordenada });
   } catch (error) {
@@ -145,13 +152,10 @@ exports.standings = async (req, res, next) => {
   }
 };
 
-// GET /api/matches/scorers/:torneoId (RF-013)
-exports.scorers = async (req, res, next) => {
-  try {
-    const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 10, 1), 50);
-
-    const scorers = await Match.aggregate([
-      { $match: { torneo: new mongoose.Types.ObjectId(req.params.torneoId), estado: 'finalizado' } },
+// Ranking de goleadores de un torneo (RF-013)
+const calcularGoleadores = (torneoId, limit) =>
+  Match.aggregate([
+      { $match: { torneo: new mongoose.Types.ObjectId(torneoId), estado: 'finalizado' } },
       { $unwind: '$estadisticas' },
       {
         $group: {
@@ -189,6 +193,13 @@ exports.scorers = async (req, res, next) => {
         },
       },
     ]);
+
+// GET /api/matches/scorers/:torneoId (RF-013)
+exports.scorers = async (req, res, next) => {
+  try {
+    const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 10, 1), 50);
+
+    const scorers = await calcularGoleadores(req.params.torneoId, limit);
 
     const resultado = scorers || [];
     res.json({ success: true, count: resultado.length, scorers: resultado });
@@ -332,6 +343,20 @@ exports.rescheduleMatch = async (req, res, next) => {
     match.escenario = nuevoEscenario;
     match.estado = 'reprogramado';
     await match.save();
+
+    // RF-014: avisa a los capitanes de ambos equipos
+    const equiposNotif = await Team.find({ _id: { $in: [match.local, match.visitante] } }).populate('capitan', 'nombre correo');
+    const nombres = Object.fromEntries(equiposNotif.map((e) => [String(e._id), e.nombre]));
+    notificarReprogramacion({
+      destinatarios: equiposNotif.map((e) => e.capitan).filter(Boolean),
+      partido: {
+        local: nombres[String(match.local)],
+        visitante: nombres[String(match.visitante)],
+        torneo: torneo.nombre,
+        fecha: match.fecha,
+        escenario: match.escenario,
+      },
+    });
 
     res.json({ success: true, message: 'Partido reprogramado', match: await poblar(Match.findById(match._id)) });
   } catch (error) {
@@ -496,3 +521,6 @@ exports.registerResult = async (req, res, next) => {
     next(error);
   }
 };
+
+exports.calcularStandings = calcularStandings;
+exports.calcularGoleadores = calcularGoleadores;

@@ -1,7 +1,9 @@
 const Tournament = require('../models/Tournament');
 const Registration = require('../models/Registration');
 const Team = require('../models/Team');
+const User = require('../models/User');
 const Match = require('../models/Match');
+const { notificarInscripcion } = require('../services/mailer');
 
 const esOrganizador = (torneo, user) =>
   user.rol === 'administrador' || String(torneo.organizador) === String(user._id);
@@ -189,6 +191,9 @@ exports.registerTeam = async (req, res, next) => {
       });
     }
 
+    // RF-014: confirmación al capitán que inscribe
+    notificarInscripcion({ usuario: req.user, equipo, torneo, estado });
+
     res.status(201).json({
       success: true,
       message: estado === 'lista_espera'
@@ -271,6 +276,15 @@ exports.reviewRegistration = async (req, res, next) => {
     inscripcion.revisadoPor = req.user._id;
     inscripcion.fechaRevision = new Date();
     await inscripcion.save();
+
+    // RF-014: avisa al capitán que inscribió el equipo
+    const [usuario, equipoNotif] = await Promise.all([
+      User.findById(inscripcion.inscritoPor).select('nombre correo'),
+      Team.findById(inscripcion.equipo).select('nombre'),
+    ]);
+    if (usuario && equipoNotif) {
+      notificarInscripcion({ usuario, equipo: equipoNotif, torneo, estado, motivo: motivoRechazo });
+    }
 
     res.json({ success: true, registration: inscripcion });
   } catch (error) {

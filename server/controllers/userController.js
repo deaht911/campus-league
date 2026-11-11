@@ -1,4 +1,5 @@
 const User = require('../models/User');
+const { cifrar } = require('../services/crypto');
 
 const { ROLES } = User;
 
@@ -17,7 +18,7 @@ exports.listUsers = async (req, res, next) => {
     }
     if (req.query.q) {
       const regex = new RegExp(escapeRegex(req.query.q), 'i');
-      filtro.$or = [{ nombre: regex }, { correo: regex }, { codigoEstudiantil: regex }];
+      filtro.$or = [{ nombre: regex }, { correo: regex }, { codigoEstudiantil: cifrar(String(req.query.q).trim()) }];
     }
 
     const [usuarios, total] = await Promise.all([
