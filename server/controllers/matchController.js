@@ -5,6 +5,7 @@ const Registration = require('../models/Registration');
 const Team = require('../models/Team');
 const User = require('../models/User');
 const { notificarReprogramacion } = require('../services/mailer');
+const { obtenerReglas, puntosPartido } = require('../services/reglas');
 
 const HORA_MS = 60 * 60 * 1000;
 // Duración estimada de un partido: sirve para detectar solapamientos de horario
@@ -112,21 +113,23 @@ const calcularStandings = async (torneo) => {
       });
     });
 
-    const partidos = await Match.find({ torneo: torneo._id, estado: 'finalizado' }).select('local visitante marcador');
+    const partidos = await Match.find({ torneo: torneo._id, estado: 'finalizado' }).select('local visitante marcador walkover');
     (partidos || []).forEach((p) => {
       const l = tabla.get(String(p.local));
       const v = tabla.get(String(p.visitante));
       if (!l || !v) return;
       const gl = p.marcador.local;
       const gv = p.marcador.visitante;
+      const { pl, pv, resultado } = puntosPartido(torneo.disciplina, gl, gv, p.walkover);
 
       l.pj++; v.pj++;
       l.gf += gl; l.gc += gv;
       v.gf += gv; v.gc += gl;
+      l.pts += pl; v.pts += pv;
 
-      if (gl > gv) { l.pg++; v.pp++; l.pts += 3; }
-      else if (gv > gl) { v.pg++; l.pp++; v.pts += 3; }
-      else { l.pe++; v.pe++; l.pts++; v.pts++; }
+      if (resultado === 'L') { l.pg++; v.pp++; }
+      else if (resultado === 'V') { v.pg++; l.pp++; }
+      else { l.pe++; v.pe++; }
     });
 
     const ordenada = [...tabla.values()]
@@ -145,8 +148,29 @@ exports.standings = async (req, res, next) => {
     }
 
     const ordenada = await calcularStandings(torneo);
+    const reglas = obtenerReglas(torneo.disciplina);
 
-    res.json({ success: true, torneo: { _id: torneo._id, nombre: torneo.nombre }, standings: ordenada });
+    // Avance del torneo: solo cuenta los partidos publicados (el borrador es privado)
+    const [jugados, total] = await Promise.all([
+      Match.countDocuments({ torneo: torneo._id, estado: 'finalizado' }),
+      torneo.calendarioPublicado ? Match.countDocuments({ torneo: torneo._id }) : 0,
+    ]);
+
+    res.json({
+      success: true,
+      torneo: {
+        _id: torneo._id,
+        nombre: torneo.nombre,
+        disciplina: torneo.disciplina,
+        formato: torneo.formato,
+        estado: torneo.estado,
+        fechaInicio: torneo.fechaInicio,
+        fechaFin: torneo.fechaFin,
+      },
+      reglas: { texto: reglas.texto, unidad: reglas.unidad, empate: reglas.empate, etiquetas: reglas.etiquetas, individual: reglas.individual },
+      progreso: { jugados, total },
+      standings: ordenada,
+    });
   } catch (error) {
     next(error);
   }

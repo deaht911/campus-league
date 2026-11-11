@@ -283,7 +283,7 @@ components:
         gf: { type: integer, description: Goles a favor }
         gc: { type: integer, description: Goles en contra }
         dg: { type: integer, description: Diferencia de goles }
-        pts: { type: integer, description: Puntos (3 victoria, 1 empate) }
+        pts: { type: integer, description: Puntos de la tabla según las reglas de la disciplina }
 
     ScorerRow:
       type: object
@@ -1223,13 +1223,18 @@ paths:
   /matches/standings/{torneoId}:
     get:
       tags: [Matches]
-      summary: Tabla de posiciones del torneo (RF-012)
-      description: Se calcula en cada consulta con los partidos finalizados (3 puntos victoria, 1 empate).
+      summary: Tabla de posiciones del torneo según su disciplina (RF-012)
+      description: >
+        Se calcula en cada consulta con los partidos finalizados, por lo que refleja el estado actual del torneo
+        (provisional mientras está en curso, definitiva al finalizar). Las reglas de puntuación dependen de la disciplina:
+        fútbol y futsal (victoria 3, empate 1), baloncesto (victoria 2, derrota 1, sin empates) y voleibol por sets
+        (3-0 y 3-1 dan 3 puntos, 3-2 da 2 al ganador y 1 al perdedor). La respuesta incluye las etiquetas de columnas
+        de la disciplina, el texto de las reglas y el avance del torneo.
       parameters:
         - { name: torneoId, in: path, required: true, schema: { type: string } }
       responses:
         '200':
-          description: Tabla ordenada por puntos, diferencia de goles y goles a favor
+          description: Tabla ordenada por puntos, diferencia y anotación a favor
           content:
             application/json:
               schema:
@@ -1241,6 +1246,35 @@ paths:
                     properties:
                       _id: { type: string }
                       nombre: { type: string }
+                      disciplina: { type: string, enum: [futsal, basquetbol, voleibol, futbol, otra] }
+                      formato: { type: string, enum: [liga, eliminacion] }
+                      estado: { type: string, enum: [borrador, inscripcion, inscripcion_cerrada, en_curso, finalizado, cancelado] }
+                      fechaInicio: { type: string, format: date-time }
+                      fechaFin: { type: string, format: date-time }
+                  reglas:
+                    type: object
+                    properties:
+                      texto: { type: string, description: Reglas de puntuación y desempate }
+                      unidad: { type: string, enum: [goles, puntos, sets] }
+                      empate: { type: boolean, description: Indica si la disciplina admite empates }
+                      etiquetas:
+                        type: object
+                        description: Siglas de las columnas a favor, en contra y diferencia (GF/GC/DG, PF/PC/DP o SG/SC/DS)
+                        properties:
+                          gf: { type: string }
+                          gc: { type: string }
+                          dg: { type: string }
+                      individual:
+                        type: object
+                        properties:
+                          activo: { type: boolean, description: false en voleibol, que no registra estadísticas individuales }
+                          titulo: { type: string, example: Goleadores }
+                          campo: { type: string, example: Goles }
+                  progreso:
+                    type: object
+                    properties:
+                      jugados: { type: integer }
+                      total: { type: integer, description: Partidos publicados del torneo }
                   standings:
                     type: array
                     items:

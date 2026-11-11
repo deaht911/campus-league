@@ -1,4 +1,5 @@
 const PDFDocument = require('pdfkit');
+const { obtenerReglas } = require('./reglas');
 
 const VERDE = '#00A35D';
 const AZUL = '#0B2545';
@@ -28,6 +29,7 @@ const tabla = (doc, columnas, filas) => {
   };
   dibujaFila(columnas.map((c) => c.titulo), true);
   filas.forEach((f) => dibujaFila(f, false));
+  doc.x = x0; // el siguiente texto vuelve al margen izquierdo
 };
 
 const encabezado = (doc, titulo, torneo) => {
@@ -48,24 +50,32 @@ const generarPDF = ({ tipo, torneo, standings = [], partidos = [], goleadores = 
     doc.on('error', reject);
 
     if (tipo === 'posiciones') {
+      const reglas = obtenerReglas(torneo.disciplina);
+      const et = reglas.etiquetas;
+      const centro = (titulo) => ({ titulo, ancho: 40, alinear: 'center' });
       encabezado(doc, 'Tabla de posiciones', torneo);
       tabla(
         doc,
         [
-          { titulo: '#', ancho: 28 }, { titulo: 'Equipo', ancho: 175 },
-          { titulo: 'PJ', ancho: 40, alinear: 'center' }, { titulo: 'PG', ancho: 40, alinear: 'center' },
-          { titulo: 'PE', ancho: 40, alinear: 'center' }, { titulo: 'PP', ancho: 40, alinear: 'center' },
-          { titulo: 'GF', ancho: 40, alinear: 'center' }, { titulo: 'GC', ancho: 40, alinear: 'center' },
-          { titulo: 'DG', ancho: 40, alinear: 'center' }, { titulo: 'PTS', ancho: 40, alinear: 'center' },
+          { titulo: '#', ancho: 28 },
+          { titulo: 'Equipo', ancho: reglas.empate ? 175 : 215 },
+          centro('PJ'), centro('PG'),
+          ...(reglas.empate ? [centro('PE')] : []),
+          centro('PP'), centro(et.gf), centro(et.gc), centro(et.dg), centro('PTS'),
         ],
-        standings.map((s) => [s.posicion, s.equipo.nombre, s.pj, s.pg, s.pe, s.pp, s.gf, s.gc, s.dg, s.pts])
+        standings.map((s) => [
+          s.posicion, s.equipo.nombre, s.pj, s.pg,
+          ...(reglas.empate ? [s.pe] : []),
+          s.pp, s.gf, s.gc, s.dg, s.pts,
+        ])
       );
-      if (goleadores.length) {
-        doc.moveDown(1.5).fillColor(AZUL).font('Helvetica-Bold').fontSize(14).text('Goleadores');
+      doc.moveDown(0.8).fillColor('#555555').font('Helvetica').fontSize(8).text(reglas.texto, { width: 515 });
+      if (reglas.individual.activo && goleadores.length) {
+        doc.moveDown(1.2).fillColor(AZUL).font('Helvetica-Bold').fontSize(14).text(reglas.individual.titulo);
         doc.moveDown(0.5);
         tabla(
           doc,
-          [{ titulo: '#', ancho: 28 }, { titulo: 'Jugador', ancho: 220 }, { titulo: 'Equipo', ancho: 175 }, { titulo: 'Goles', ancho: 60, alinear: 'center' }],
+          [{ titulo: '#', ancho: 28 }, { titulo: 'Jugador', ancho: 220 }, { titulo: 'Equipo', ancho: 175 }, { titulo: reglas.individual.campo, ancho: 60, alinear: 'center' }],
           goleadores.map((g, i) => [i + 1, g.jugador?.nombre, g.equipo?.nombre, g.goles])
         );
       }
