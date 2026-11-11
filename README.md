@@ -39,8 +39,11 @@ Edita `server/.env` con tus valores (ver tabla siguiente).
 | `JWT_SECRET` | Clave para firmar los tokens (usar una larga y aleatoria) | `cambia-esto` |
 | `JWT_EXPIRE` | Duración del token | `30m` |
 | `BCRYPT_SALT_ROUNDS` | Salt factor de bcrypt (mínimo 10) | `10` |
+| `ENCRYPTION_KEY` | Clave AES-256 (64 hex) para cifrar datos personales. Obligatoria en producción | `openssl rand -hex 32` |
 | `FRONTEND_URL` | Orígenes permitidos por CORS, separados por coma | `http://localhost:5173` |
 | `API_PROD_URL` | (Opcional) URL pública de la API para Swagger | `https://mi-api.com` |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM` | (Opcional) Servidor de correo para OTP y notificaciones. Sin `SMTP_HOST` los correos se simulan en consola | `smtp.gmail.com` |
+| `RATE_LIMIT_MAX` | Intentos máximos por IP en `/api/auth` cada 15 min | `100` |
 
 ### `client/.env`
 
@@ -57,6 +60,7 @@ Desde la raíz:
 | `npm run dev` | Levanta API y cliente a la vez |
 | `npm run seed` | Borra la base y carga datos de demostración |
 | `npm run install:all` | Instala dependencias de `server` y `client` |
+| `npm test --prefix server` | Ejecuta las pruebas automáticas del backend |
 
 El seed **borra todas las colecciones**: úsalo solo en desarrollo.
 
@@ -100,11 +104,16 @@ Todas las rutas cuelgan de `/api`. El detalle completo con esquemas y ejemplos e
 
 | Módulo | Ruta base | Resumen |
 |---|---|---|
-| Auth | `/auth` | Registro, verificación OTP, login, sesión activa |
+| Auth | `/auth` | Registro, verificación OTP, login, sesión activa, recuperación de contraseña |
 | Usuarios | `/users` | Listado, perfil propio, roles, estado, árbitros |
 | Equipos | `/teams` | CRUD de equipos y plantilla |
 | Torneos | `/tournaments` | CRUD, inscripciones, calendario (generar, publicar, descartar) |
 | Partidos | `/matches` | Calendario público, acta, reprogramación, posiciones, goleadores |
+| Reportes | `/reports` | Exportación en PDF de posiciones, calendario y resultados (organizador / administrador) |
+
+## Informe técnico
+
+El informe completo (arquitectura, trazabilidad RF/RNF, modelo de datos, endpoints y pruebas) está en [`docs/informe-tecnico.md`](docs/informe-tecnico.md) y en Word en [`docs/informe-tecnico.docx`](docs/informe-tecnico.docx).
 
 ## Reglas de negocio destacadas
 
@@ -112,6 +121,7 @@ Todas las rutas cuelgan de `/api`. El detalle completo con esquemas y ejemplos e
 - La inscripción exige período abierto, plantilla mínima y jugadores habilitados. Sin cupos, queda en lista de espera.
 - El calendario necesita al menos 4 equipos aprobados y evita choques de escenario, equipo y árbitro (los partidos se consideran de unos 90 minutos).
 - El acta solo cierra si los goles individuales coinciden con el marcador. Con walkover gana 3-0 el equipo presente.
+- Los cambios de estado de inscripciones y las reprogramaciones se notifican por correo a los capitanes (RF-014).
 - La tabla de posiciones se calcula en cada consulta: 3 puntos por victoria, 1 por empate.
 
 ## Flujo de trabajo Git
