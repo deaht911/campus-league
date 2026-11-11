@@ -113,7 +113,7 @@ Todas las rutas cuelgan de `/api`. El detalle completo con esquemas y ejemplos e
 
 ## Informe técnico
 
-El informe completo (arquitectura, trazabilidad RF/RNF, modelo de datos, endpoints y pruebas) está en [`docs/informe-tecnico.md`](docs/informe-tecnico.md) y en Word en [`docs/informe-tecnico.docx`](docs/informe-tecnico.docx).
+El informe completo (arquitectura, trazabilidad RF/RNF, modelo de datos, endpoints y pruebas) está en [`docs/informe-tecnico.md`](docs/informe-tecnico.md), en PDF en [`docs/informe-tecnico.pdf`](docs/informe-tecnico.pdf) y en Word en [`docs/informe-tecnico.docx`](docs/informe-tecnico.docx).
 
 ## Reglas de negocio destacadas
 
