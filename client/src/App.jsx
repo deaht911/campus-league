@@ -12,15 +12,8 @@ import MyTeam from './pages/MyTeam';
 import UserProfile from './pages/UserProfile';
 import OrganizerPanel from './pages/panel/OrganizerPanel';
 import RefereePanel from './pages/panel/RefereePanel';
+import AdminPanel from './pages/panel/AdminPanel';
 
-function Pendiente({ titulo }) {
-  return (
-    <div className="mx-auto max-w-3xl px-4 py-16 text-center">
-      <h1 className="text-2xl font-bold text-white">{titulo}</h1>
-      <p className="mt-2 text-slate-400">Sección en construcción.</p>
-    </div>
-  );
-}
 
 function NoEncontrado() {
   return (
@@ -65,7 +58,7 @@ function Layout() {
             <Route path="/panel/arbitro" element={<RefereePanel />} />
           </Route>
           <Route element={<ProtectedRoute roles={['administrador']} />}>
-            <Route path="/panel/admin" element={<Pendiente titulo="Panel de administración" />} />
+            <Route path="/panel/admin" element={<AdminPanel />} />
           </Route>
 
           <Route path="*" element={<NoEncontrado />} />

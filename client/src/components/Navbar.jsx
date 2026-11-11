@@ -30,26 +30,26 @@ export default function Navbar() {
         </Link>
 
         <div className="flex items-center gap-6 text-sm font-medium text-gray-300">
-          <Link to="/torneos" className="hover:text-white">Torneos</Link>
-          <Link to="/calendario" className="hover:text-white">Calendario</Link>
-          <Link to="/posiciones" className="hover:text-white">Posiciones</Link>
+          <Link to="/torneos" className="whitespace-nowrap hover:text-white">Torneos</Link>
+          <Link to="/calendario" className="whitespace-nowrap hover:text-white">Calendario</Link>
+          <Link to="/posiciones" className="whitespace-nowrap hover:text-white">Posiciones</Link>
           {user && hasRole('jugador', 'capitan', 'administrador') && (
-            <Link to="/mi-equipo" className="hover:text-white">
+            <Link to="/mi-equipo" className="whitespace-nowrap hover:text-white">
               Mi Equipo
             </Link>
           )}
           {user && hasRole('organizador', 'administrador') && (
-            <Link to="/panel/organizador" className="hover:text-white">
+            <Link to="/panel/organizador" className="whitespace-nowrap hover:text-white">
               Organizador
             </Link>
           )}
           {user && hasRole('arbitro', 'administrador') && (
-            <Link to="/panel/arbitro" className="hover:text-white">
+            <Link to="/panel/arbitro" className="whitespace-nowrap hover:text-white">
               Árbitro
             </Link>
           )}
           {user && hasRole('administrador') && (
-            <Link to="/panel/admin" className="hover:text-white">
+            <Link to="/panel/admin" className="whitespace-nowrap hover:text-white">
               Administración
             </Link>
           )}

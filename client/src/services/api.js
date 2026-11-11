@@ -146,3 +146,10 @@ export const submitResult = (matchId, datos) =>
 
 export const reopenMatch = (matchId) =>
   api.patch(`/matches/${matchId}/reopen`).then((res) => res.data);
+
+// Administración de usuarios (solo administrador)
+export const updateUserRole = (id, rol) =>
+  api.patch(`/users/${id}/role`, { rol }).then((res) => res.data);
+
+export const updateUserStatus = (id, activo) =>
+  api.patch(`/users/${id}/status`, { activo }).then((res) => res.data);
