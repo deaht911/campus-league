@@ -147,7 +147,10 @@ export default function Calendar() {
 
   const mes = useMemo(() => {
     if (mesElegido) return mesElegido;
-    const base = partidos.length ? new Date(partidos[0].fecha) : new Date(hoy + 'T00:00:00');
+    // Abre en el mes del próximo partido (o del último, si todos ya se jugaron)
+    const inicioHoy = new Date(hoy + 'T00:00:00').getTime();
+    const proximo = partidos.find((p) => new Date(p.fecha).getTime() >= inicioHoy);
+    const base = partidos.length ? new Date((proximo || partidos[partidos.length - 1]).fecha) : new Date(hoy + 'T00:00:00');
     return new Date(base.getFullYear(), base.getMonth(), 1);
   }, [mesElegido, partidos, hoy]);
 

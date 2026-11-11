@@ -2,27 +2,16 @@ const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 
 const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
 const connectDB = require('../config/db');
 const User = require('../models/User');
 const Team = require('../models/Team');
 const Tournament = require('../models/Tournament');
 const Registration = require('../models/Registration');
 const Match = require('../models/Match');
+const { generarDatosDemo } = require('./demoData');
 
 const PASSWORD = 'Campus2026!';
-const DIA_MS = 24 * 60 * 60 * 1000;
-
-let contador = 0;
-const crearUsuario = (nombre, correo, rol, facultad) =>
-  User.create({
-    nombre,
-    correo,
-    password: PASSWORD,
-    rol,
-    facultad,
-    codigoEstudiantil: `UAB-${String(++contador).padStart(4, '0')}`,
-    verificado: true,
-  });
 
 const run = async () => {
   if (process.env.NODE_ENV === 'production' && !process.argv.includes('--force')) {
@@ -40,88 +29,45 @@ const run = async () => {
     Match.deleteMany({}),
   ]);
 
-  // Usuarios de los 5 roles
-  const admin = await crearUsuario('Administrador UAB', 'admin@uab.edu.bo', 'administrador', 'Administración');
-  const organizador = await crearUsuario('Lucía Fernández', 'organizador@uab.edu.bo', 'organizador', 'Bienestar Universitario');
-  const arbitro = await crearUsuario('Árbitro Central', 'arbitro@uab.edu.bo', 'arbitro', 'Bienestar Universitario');
-  await crearUsuario('Árbitro Norte', 'arbitro2@uab.edu.bo', 'arbitro', 'Bienestar Universitario');
-  await crearUsuario('Árbitro Sur', 'arbitro3@uab.edu.bo', 'arbitro', 'Bienestar Universitario');
-  const capitan = await crearUsuario('Mateo Rivas', 'capitan@uab.edu.bo', 'capitan', 'Ingeniería');
-  const jugador = await crearUsuario('Jugador Demo', 'jugador@uab.edu.bo', 'jugador', 'Ingeniería');
+  // Un único hash para todas las cuentas de demostración (misma contraseña)
+  const rondas = Math.max(parseInt(process.env.BCRYPT_SALT_ROUNDS, 10) || 10, 10);
+  const hash = await bcrypt.hash(PASSWORD, rondas);
+  const datos = generarDatosDemo({ hash });
 
-  // Cuatro equipos de futsal con plantilla completa (5 jugadores)
-  const definiciones = [
-    { nombre: 'Los Tornillos', facultad: 'Ingeniería', capitan, base: [jugador] },
-    { nombre: 'Teólogos FC', facultad: 'Teología', capitan: null, base: [] },
-    { nombre: 'Salud United', facultad: 'Ciencias de la Salud', capitan: null, base: [] },
-    { nombre: 'Econo Stars', facultad: 'Ciencias Empresariales', capitan: null, base: [] },
-  ];
-
-  const equipos = [];
-  for (let i = 0; i < definiciones.length; i++) {
-    const def = definiciones[i];
-    const cap = def.capitan || (await crearUsuario(`Capitán ${def.nombre}`, `capitan${i + 1}@uab.edu.bo`, 'capitan', def.facultad));
-
-    const integrantes = [cap, ...def.base];
-    let n = 1;
-    while (integrantes.length < 5) {
-      integrantes.push(
-        await crearUsuario(`Jugador ${n} ${def.nombre}`, `jugador${i + 1}${n}@uab.edu.bo`, 'jugador', def.facultad)
-      );
-      n++;
-    }
-
-    const equipo = await Team.create({
-      nombre: def.nombre,
-      disciplina: 'futsal',
-      facultad: def.facultad,
-      capitan: cap._id,
-      jugadores: integrantes.map((u, idx) => ({ usuario: u._id, numeroCamiseta: idx + 1 })),
-    });
-    equipos.push({ equipo, capitan: cap });
-  }
-
-  // Torneo con inscripciones abiertas
-  const ahora = Date.now();
-  const torneo = await Tournament.create({
-    nombre: 'Copa UAB 2026',
-    disciplina: 'futsal',
-    formato: 'liga',
-    fechaInicio: new Date(ahora + 10 * DIA_MS),
-    fechaFin: new Date(ahora + 40 * DIA_MS),
-    inscripcionInicio: new Date(ahora - DIA_MS),
-    inscripcionFin: new Date(ahora + 7 * DIA_MS),
-    maxEquipos: 8,
-    minJugadores: 5,
-    reglamento: 'Reglamento oficial de torneos internos de la UAB.',
-    escenarios: ['Coliseo UAB', 'Cancha techada'],
-    estado: 'inscripcion',
-    organizador: organizador._id,
-  });
-
-  // 3 inscripciones aprobadas y 1 pendiente (para probar la revisión del organizador)
-  for (let i = 0; i < equipos.length; i++) {
-    const aprobada = i < 3;
-    await Registration.create({
-      torneo: torneo._id,
-      equipo: equipos[i].equipo._id,
-      inscritoPor: equipos[i].capitan._id,
-      aceptaReglamento: true,
-      estado: aprobada ? 'aprobada' : 'pendiente',
-      revisadoPor: aprobada ? organizador._id : undefined,
-      fechaRevision: aprobada ? new Date() : undefined,
-    });
-  }
+  await User.insertMany(datos.users);
+  await Team.insertMany(datos.teams);
+  await Tournament.insertMany(datos.tournaments);
+  await Registration.insertMany(datos.registrations);
+  await Match.insertMany(datos.matches);
 
   console.log('\nSeed completado. Contraseña de todas las cuentas:', PASSWORD);
+  console.log('\nCuentas por rol:');
+  const c = datos.cuentas;
   console.table([
-    { rol: 'administrador', correo: admin.correo },
-    { rol: 'organizador', correo: organizador.correo },
-    { rol: 'arbitro', correo: arbitro.correo },
-    { rol: 'capitan', correo: capitan.correo },
-    { rol: 'jugador', correo: jugador.correo },
+    { rol: 'administrador', correo: c.admin.correo },
+    { rol: 'organizador (futsal, voleibol, fútbol)', correo: c.organizador.correo },
+    { rol: 'organizador (baloncesto, tenis de mesa)', correo: c.organizador2.correo },
+    { rol: 'árbitro (tiene actas pendientes)', correo: c.arbitro.correo },
+    { rol: 'capitán (Los Tornillos, futsal)', correo: c.capitan.correo },
+    { rol: 'jugador', correo: c.jugador.correo },
   ]);
-  console.log(`Torneo: "${torneo.nombre}" (${equipos.length} equipos, 3 aprobados y 1 pendiente)`);
+
+  console.log('\nCapitanes de los demás equipos (para probar inscripciones por disciplina):');
+  console.table(datos.capitanes.filter((x) => x.correo !== c.capitan.correo).map((x) => ({ correo: x.correo, equipo: x.equipo, disciplina: x.disciplina })));
+
+  const porTorneo = (id) => datos.matches.filter((m) => String(m.torneo) === String(id)).length;
+  const equipos = (id) => datos.registrations.filter((r) => String(r.torneo) === String(id) && r.estado === 'aprobada').length;
+  console.log('\nTorneos cargados:');
+  console.table(
+    datos.tournaments.map((t) => ({
+      torneo: t.nombre,
+      disciplina: t.disciplina,
+      estado: t.estado,
+      'equipos aprobados': equipos(t._id),
+      partidos: porTorneo(t._id),
+    }))
+  );
+  console.log(`Usuarios: ${datos.users.length} · Equipos: ${datos.teams.length} · Partidos: ${datos.matches.length}`);
 
   await mongoose.disconnect();
 };
