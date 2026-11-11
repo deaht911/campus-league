@@ -68,15 +68,32 @@ El seed **borra todas las colecciones**: úsalo solo en desarrollo.
 
 Tras `npm run seed`, todas las cuentas tienen la contraseña `Campus2026!`.
 
-| Rol | Correo |
-|---|---|
-| Administrador | `admin@uab.edu.bo` |
-| Organizador | `organizador@uab.edu.bo` |
-| Árbitro | `arbitro@uab.edu.bo` (también `arbitro2@` y `arbitro3@`) |
-| Capitán | `capitan@uab.edu.bo` |
-| Jugador | `jugador@uab.edu.bo` |
+| Rol | Correo | Qué permite probar |
+|---|---|---|
+| Administrador | `admin@uab.edu.bo` | Gestión de usuarios y roles, todos los torneos y reportes |
+| Organizador | `organizador@uab.edu.bo` | Futsal, voleibol y fútbol: aprobar inscripciones, publicar el calendario en borrador, reprogramar, asignar árbitros, exportar PDF |
+| Organizador 2 | `organizador2@uab.edu.bo` | Baloncesto y tenis de mesa: lista de espera y torneo cancelado |
+| Árbitro | `arbitro@uab.edu.bo` (también `arbitro2@` y `arbitro3@`) | Tiene actas pendientes y un borrador en el torneo de voleibol |
+| Capitán | `capitan@uab.edu.bo` | Equipo «Los Tornillos» (futsal): plantilla e inscripciones |
+| Jugador | `jugador@uab.edu.bo` | Perfil con estadísticas individuales |
 
-El seed crea además el torneo "Copa UAB 2026" (futsal, liga) con 4 equipos: 3 inscripciones aprobadas y 1 pendiente.
+Los capitanes de los demás equipos (`capitan2@` … `capitan28@uab.edu.bo`) se listan en la consola al terminar `npm run seed`.
+
+### Datos cargados por el seed
+
+El seed carga 7 torneos en 5 disciplinas, 28 equipos, unos 190 usuarios y más de 60 partidos, para poder probar el historial completo:
+
+| Torneo | Disciplina y formato | Estado | Qué permite ver |
+|---|---|---|---|
+| Liga Universitaria de Futsal 2025/2026 | Futsal, liga (8 equipos) | **Finalizado** | Tabla final, campeón, goleadores, resultados de 28 partidos |
+| Torneo Intercarreras de Baloncesto 2026 | Baloncesto, eliminación directa | **Finalizado** | Cuartos, semifinales, final y tercer puesto, con campeón |
+| Liga de Voleibol Apertura 2026 | Voleibol, liga (6 equipos) | En curso | Resultados parciales, actas pendientes y partidos futuros |
+| Copa Fútbol 11 Clausura 2026 | Fútbol, liga (6 equipos) | Inscripción cerrada | Calendario en borrador, listo para publicar |
+| Copa UAB 2026 | Futsal, liga | Inscripción abierta | 3 inscripciones aprobadas y 1 pendiente |
+| Copa Baloncesto 2027 | Baloncesto, liga (4 cupos) | Inscripción abierta | Inscripciones pendientes y lista de espera |
+| Torneo Relámpago de Tenis de Mesa | Otra, eliminación | Cancelado | Estado cancelado en el catálogo |
+
+Los resultados son simulados pero deterministas: cada `npm run seed` produce los mismos marcadores y goleadores. Las fechas se calculan respecto al día en que se ejecuta el seed.
 
 ## URLs locales
 
@@ -122,7 +139,7 @@ El informe completo (arquitectura, trazabilidad RF/RNF, modelo de datos, endpoin
 - El calendario necesita al menos 4 equipos aprobados y evita choques de escenario, equipo y árbitro (los partidos se consideran de unos 90 minutos).
 - El acta solo cierra si los goles individuales coinciden con el marcador. Con walkover gana 3-0 el equipo presente.
 - Los cambios de estado de inscripciones y las reprogramaciones se notifican por correo a los capitanes (RF-014).
-- La tabla de posiciones se calcula en cada consulta: 3 puntos por victoria, 1 por empate.
+- La tabla de posiciones se calcula en cada consulta según la disciplina: fútbol y futsal (victoria 3, empate 1), baloncesto (victoria 2, derrota 1) y voleibol por sets (3-0 y 3-1 valen 3, 3-2 vale 2 y 1). Muestra el campeón al finalizar y las posiciones provisionales mientras el torneo está en curso.
 
 ## Flujo de trabajo Git
 
