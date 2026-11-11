@@ -21,6 +21,8 @@ tags:
     description: Torneos, inscripciones y calendario
   - name: Matches
     description: Partidos, actas, tabla de posiciones y goleadores
+  - name: Reports
+    description: Exportación de reportes en PDF
 
 components:
   securitySchemes:
@@ -546,6 +548,59 @@ paths:
                     $ref: '#/components/schemas/User'
         '401':
           $ref: '#/components/responses/Unauthorized'
+
+  /auth/forgot-password:
+    post:
+      tags: [Auth]
+      summary: Solicitar código para restablecer la contraseña (RF-002)
+      description: Envía un OTP al correo institucional. Respuesta genérica para no revelar si el correo existe. En desarrollo el código se devuelve en `otpDesarrollo`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [correo]
+              properties:
+                correo: { type: string, format: email, example: jugador@uab.edu.bo }
+      responses:
+        '200':
+          description: Respuesta genérica
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  message: { type: string }
+                  otpDesarrollo: { type: string, description: Solo en entorno no productivo }
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '429':
+          description: Demasiados intentos (rate limit)
+
+  /auth/reset-password:
+    post:
+      tags: [Auth]
+      summary: Restablecer la contraseña con el código OTP (RF-002)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [correo, codigo, password]
+              properties:
+                correo: { type: string, format: email }
+                codigo: { type: string, pattern: '^\d{6}$', example: '123456' }
+                password: { type: string, minLength: 8 }
+      responses:
+        '200':
+          description: Contraseña actualizada
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '429':
+          description: Demasiados intentos (rate limit)
 
   /teams:
     get:
@@ -1544,6 +1599,60 @@ paths:
       responses:
         '200':
           description: Estado de la cuenta actualizado
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /users/referees:
+    get:
+      tags: [Users]
+      summary: Listar árbitros activos (organizador o administrador)
+      description: Se usa para asignar árbitros a los partidos.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Árbitros activos
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  count: { type: integer }
+                  users:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /reports/tournaments/{id}/pdf:
+    parameters:
+      - $ref: '#/components/parameters/IdParam'
+    get:
+      tags: [Reports]
+      summary: Exportar reporte del torneo en PDF (RF-015, CU-12)
+      description: Solo el organizador del torneo o el administrador.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: tipo
+          in: query
+          schema: { type: string, enum: [posiciones, calendario, resultados], default: posiciones }
+      responses:
+        '200':
+          description: Archivo PDF
+          content:
+            application/pdf:
+              schema: { type: string, format: binary }
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
