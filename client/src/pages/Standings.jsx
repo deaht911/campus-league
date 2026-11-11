@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { getErrorMessage, getScorers, getStandings, getTournaments } from '../services/api';
+import { useAuth } from '../context/AuthContext';
+import { descargarReporte, getErrorMessage, getScorers, getStandings, getTournaments } from '../services/api';
 
 const MEDALLAS = ['🥇', '🥈', '🥉'];
 
@@ -98,6 +99,7 @@ function TablaGoleadores({ filas }) {
 }
 
 export default function Standings() {
+  const { hasRole } = useAuth();
   const [torneos, setTorneos] = useState([]);
   const [cargandoTorneos, setCargandoTorneos] = useState(true);
   const [errorTorneos, setErrorTorneos] = useState('');
@@ -140,8 +142,8 @@ export default function Standings() {
   return (
     <div>
       <header className="border-b border-[#24405f] bg-[#0B2545]">
-        <div className="mx-auto max-w-6xl px-4 py-10">
-          <h1 className="font-display text-4xl font-bold text-white">Posiciones &amp; Estadísticas</h1>
+        <div className="mx-auto max-w-6xl px-4 py-6 sm:py-10">
+          <h1 className="font-display text-3xl font-bold text-white sm:text-4xl">Posiciones &amp; Estadísticas</h1>
           <p className="mt-2 text-gray-300">Clasificación y estadísticas de jugadores.</p>
         </div>
       </header>
@@ -195,11 +197,20 @@ export default function Standings() {
         </div>
 
         <section className="mt-4 overflow-hidden rounded-2xl border border-[#24405f] bg-[#0f1824]">
-          <div className="flex items-center gap-3 border-b border-[#24405f] px-5 py-3">
+          <div className="flex flex-wrap items-center gap-3 border-b border-[#24405f] px-5 py-3">
             <h2 className="font-display text-sm font-semibold text-white">
               {pestana === 'tabla' ? 'Tabla General' : 'Máximos goleadores'}
             </h2>
             {torneoActual && <span className="badge">{torneoActual.nombre}</span>}
+            {hasRole('organizador', 'administrador') && torneoId && (
+              <button
+                type="button"
+                className="btn-outline ml-auto px-3 py-1 text-xs"
+                onClick={() => descargarReporte(torneoId, 'posiciones').catch((err) => setDatos((d) => ({ ...d, error: getErrorMessage(err) })))}
+              >
+                Exportar PDF
+              </button>
+            )}
           </div>
 
           {datos.error && (

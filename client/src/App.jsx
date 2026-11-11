@@ -4,6 +4,7 @@ import Navbar from './components/Navbar';
 import ProtectedRoute from './components/ProtectedRoute';
 import LoginPage from './pages/auth/LoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
+import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
 import Home from './pages/Home';
 import Tournaments from './pages/Tournaments';
 import Calendar from './pages/Calendar';
@@ -27,7 +28,7 @@ function NoEncontrado() {
   );
 }
 
-const RUTAS_SIN_NAVBAR = ['/login', '/registro'];
+const RUTAS_SIN_NAVBAR = ['/login', '/registro', '/recuperar'];
 
 function Layout() {
   const { pathname } = useLocation();
@@ -44,6 +45,7 @@ function Layout() {
           <Route path="/posiciones" element={<Standings />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/registro" element={<RegisterPage />} />
+          <Route path="/recuperar" element={<ForgotPasswordPage />} />
 
           <Route element={<ProtectedRoute />}>
             <Route path="/perfil" element={<UserProfile />} />

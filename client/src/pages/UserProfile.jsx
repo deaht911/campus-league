@@ -118,7 +118,7 @@ export default function UserProfile() {
   return (
     <div>
       <header className="border-b border-[#24405f] bg-[#0B2545]">
-        <div className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-10">
+        <div className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-6 sm:py-10">
           <span className="font-display flex h-16 w-16 items-center justify-center rounded-2xl bg-[#00C16E] text-2xl font-bold text-[#0B2545]">
             {iniciales}
           </span>

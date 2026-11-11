@@ -50,13 +50,13 @@ export default function Home() {
         />
         <div className="absolute inset-0 bg-gradient-to-r from-[#0B192C] via-[#0B192C]/80 to-transparent" />
 
-        <div className="relative mx-auto max-w-6xl px-4 py-20 sm:py-28">
+        <div className="relative mx-auto max-w-6xl px-4 py-12 sm:py-28">
           <span className="badge">
             <span className="h-2 w-2 rounded-full bg-[#00C16E]" />
             Temporada Deportiva 2025/2026 Activa
           </span>
 
-          <h1 className="font-display mt-6 max-w-2xl text-5xl font-bold leading-tight text-white sm:text-6xl">
+          <h1 className="font-display mt-6 max-w-2xl text-4xl font-bold leading-tight text-white sm:text-5xl lg:text-6xl">
             La Liga
             <br />
             <span className="text-[#00C16E]">Universitaria</span>
@@ -64,7 +64,7 @@ export default function Home() {
             Empieza Aquí.
           </h1>
 
-          <p className="mt-6 max-w-xl text-lg text-gray-300">
+          <p className="mt-6 max-w-xl text-base text-gray-300 sm:text-lg">
             Gestiona torneos, consulta resultados, sigue la tabla de posiciones y forma parte del deporte universitario.
           </p>
 

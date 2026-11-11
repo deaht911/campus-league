@@ -153,3 +153,23 @@ export const updateUserRole = (id, rol) =>
 
 export const updateUserStatus = (id, activo) =>
   api.patch(`/users/${id}/status`, { activo }).then((res) => res.data);
+
+// Recuperación de contraseña (RF-002)
+export const forgotPassword = (correo) =>
+  api.post('/auth/forgot-password', { correo }).then((res) => res.data);
+
+export const resetPassword = (datos) =>
+  api.post('/auth/reset-password', datos).then((res) => res.data);
+
+// Exportación de reportes en PDF (RF-015, CU-12): descarga el archivo en el navegador
+export const descargarReporte = async (torneoId, tipo = 'posiciones') => {
+  const res = await api.get(`/reports/tournaments/${torneoId}/pdf`, { params: { tipo }, responseType: 'blob' });
+  const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
+  const enlace = document.createElement('a');
+  enlace.href = url;
+  enlace.download = `${tipo}-campus-league.pdf`;
+  document.body.appendChild(enlace);
+  enlace.click();
+  enlace.remove();
+  window.URL.revokeObjectURL(url);
+};

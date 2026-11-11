@@ -149,7 +149,7 @@ function FilaJugador({ jugador, esCapitanEquipo, puedeEditar, onGuardar, onBaja 
         )}
       </td>
       {puedeEditar && (
-        <td className="text-right">
+        <td className="whitespace-nowrap text-right">
           {editando ? (
             <div className="flex justify-end gap-2">
               <button type="button" className="btn-primary px-3 py-1 text-xs" onClick={guardar}>
@@ -304,8 +304,8 @@ export default function MyTeam() {
   return (
     <div>
       <header className="border-b border-[#24405f] bg-[#0B2545]">
-        <div className="mx-auto max-w-6xl px-4 py-10">
-          <h1 className="font-display text-4xl font-bold text-white">Mi Equipo</h1>
+        <div className="mx-auto max-w-6xl px-4 py-6 sm:py-10">
+          <h1 className="font-display text-3xl font-bold text-white sm:text-4xl">Mi Equipo</h1>
           <p className="mt-2 text-gray-300">Gestiona tu plantilla e inscríbela en los torneos abiertos.</p>
         </div>
       </header>

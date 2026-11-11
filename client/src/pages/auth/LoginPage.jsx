@@ -154,13 +154,9 @@ export default function LoginPage() {
                 <label htmlFor="password" className="label-dark">
                   Contraseña
                 </label>
-                <button
-                  type="button"
-                  className="mb-1.5 text-xs font-medium text-white hover:text-[#34E08F]"
-                  onClick={() => setInfo('Para restablecer su contraseña contacte al administrador de Campus League.')}
-                >
+                <Link to="/recuperar" className="mb-1.5 text-xs font-medium text-white hover:text-[#34E08F]">
                   ¿Olvidaste tu contraseña?
-                </button>
+                </Link>
               </div>
               <input
                 id="password"

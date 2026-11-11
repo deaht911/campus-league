@@ -3,6 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import {
   assignReferee,
   createTournament,
+  descargarReporte,
   discardFixture,
   generateFixture,
   getErrorMessage,
@@ -243,6 +244,16 @@ export default function OrganizerPanel() {
 
   const recargar = () => setVersion((v) => v + 1);
 
+  const exportar = async (tipo) => {
+    setMensaje({ tipo: '', texto: '' });
+    try {
+      await descargarReporte(torneo._id, tipo);
+    } catch (err) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      setMensaje({ tipo: 'error', texto: 'No se pudo generar el PDF. ' + getErrorMessage(err) });
+    }
+  };
+
   const ejecutar = async (accion, textoOk) => {
     setMensaje({ tipo: '', texto: '' });
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -310,8 +321,8 @@ export default function OrganizerPanel() {
   return (
     <div>
       <header className="border-b border-[#24405f] bg-[#0B2545]">
-        <div className="mx-auto max-w-6xl px-4 py-10">
-          <h1 className="font-display text-4xl font-bold text-white">Panel del Organizador</h1>
+        <div className="mx-auto max-w-6xl px-4 py-6 sm:py-10">
+          <h1 className="font-display text-3xl font-bold text-white sm:text-4xl">Panel del Organizador</h1>
           <p className="mt-2 text-gray-300">Crea torneos, aprueba inscripciones y gestiona el calendario.</p>
         </div>
       </header>
@@ -430,6 +441,14 @@ export default function OrganizerPanel() {
                   </>
                 )}
                 {publicado && <span className="alert-ok">Calendario publicado en el portal público.</span>}
+                <span className="ml-auto flex flex-wrap items-center gap-2">
+                  <span className="text-xs text-gray-400">Exportar PDF:</span>
+                  {[['posiciones', 'Posiciones'], ['calendario', 'Calendario'], ['resultados', 'Resultados']].map(([k, etiqueta]) => (
+                    <button key={k} type="button" className="btn-outline px-3 py-1 text-xs" onClick={() => exportar(k)}>
+                      {etiqueta}
+                    </button>
+                  ))}
+                </span>
               </div>
               {!publicado && aprobadas < 4 && (
                 <p className="mt-3 text-xs text-amber-400">
@@ -477,7 +496,7 @@ export default function OrganizerPanel() {
                             </span>
                             {r.motivoRechazo && <p className="mt-1 text-xs text-gray-500">{r.motivoRechazo}</p>}
                           </td>
-                          <td className="text-right">
+                          <td className="whitespace-nowrap text-right">
                             {publicado ? (
                               <span className="text-xs text-gray-500">Bloqueado</span>
                             ) : rechazo?.id === r._id ? (
@@ -597,7 +616,7 @@ export default function OrganizerPanel() {
                                 m.arbitro?.nombre || '–'
                               )}
                             </td>
-                            <td className="text-right">
+                            <td className="whitespace-nowrap text-right">
                               {cerrado ? (
                                 <span className="text-xs text-gray-500">{m.estado}</span>
                               ) : reprogramando?.id === m._id ? (
