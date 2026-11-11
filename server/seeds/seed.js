@@ -44,6 +44,8 @@ const run = async () => {
   const admin = await crearUsuario('Administrador UAB', 'admin@uab.edu.bo', 'administrador', 'Administración');
   const organizador = await crearUsuario('Lucía Fernández', 'organizador@uab.edu.bo', 'organizador', 'Bienestar Universitario');
   const arbitro = await crearUsuario('Árbitro Central', 'arbitro@uab.edu.bo', 'arbitro', 'Bienestar Universitario');
+  await crearUsuario('Árbitro Norte', 'arbitro2@uab.edu.bo', 'arbitro', 'Bienestar Universitario');
+  await crearUsuario('Árbitro Sur', 'arbitro3@uab.edu.bo', 'arbitro', 'Bienestar Universitario');
   const capitan = await crearUsuario('Mateo Rivas', 'capitan@uab.edu.bo', 'capitan', 'Ingeniería');
   const jugador = await crearUsuario('Jugador Demo', 'jugador@uab.edu.bo', 'jugador', 'Ingeniería');
 

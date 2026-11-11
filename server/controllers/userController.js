@@ -122,3 +122,12 @@ exports.updateMe = async (req, res, next) => {
     next(error);
   }
 };
+// GET /api/users/referees (organizador / admin) - árbitros activos para asignarlos a partidos
+exports.listReferees = async (req, res, next) => {
+  try {
+    const users = await User.find({ rol: 'arbitro', activo: true }).select('nombre correo').sort({ nombre: 1 });
+    res.json({ success: true, count: users.length, users });
+  } catch (error) {
+    next(error);
+  }
+};

@@ -2,6 +2,7 @@ const express = require('express');
 const { body, param, validationResult } = require('express-validator');
 const {
   listUsers,
+  listReferees,
   getUser,
   updateRole,
   updateStatus,
@@ -41,6 +42,7 @@ router.put(
 
 // Administración de usuarios
 router.get('/', authorize('administrador'), listUsers);
+router.get('/referees', authorize('organizador', 'administrador'), listReferees);
 router.get('/:id', authorize('administrador'), [idValido], validar, getUser);
 router.patch('/:id/role', authorize('administrador'), [idValido], validar, updateRole);
 router.patch('/:id/status', authorize('administrador'), [idValido], validar, updateStatus);

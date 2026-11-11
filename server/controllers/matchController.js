@@ -6,6 +6,21 @@ const Team = require('../models/Team');
 const User = require('../models/User');
 
 const HORA_MS = 60 * 60 * 1000;
+// Duración estimada de un partido: sirve para detectar solapamientos de horario
+const DURACION_PARTIDO_MS = 90 * 60 * 1000;
+
+// Busca un partido (distinto de excluirId) que se solape con [inicio, inicio + duración)
+// y que cumpla la condición extra (mismo árbitro, mismo escenario o mismo equipo)
+const buscarSolapado = (inicio, condicion, excluirId) =>
+  Match.findOne({
+    _id: { $ne: excluirId },
+    estado: { $ne: 'cancelado' },
+    fecha: {
+      $gt: new Date(inicio.getTime() - DURACION_PARTIDO_MS),
+      $lt: new Date(inicio.getTime() + DURACION_PARTIDO_MS),
+    },
+    ...condicion,
+  });
 
 const esOrganizador = (torneo, user) =>
   user && (user.rol === 'administrador' || String(torneo.organizador) === String(user._id));
@@ -250,14 +265,9 @@ exports.assignReferee = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'El usuario indicado no es un árbitro activo' });
     }
 
-    const choque = await Match.findOne({
-      _id: { $ne: match._id },
-      arbitro: arbitro._id,
-      fecha: match.fecha,
-      estado: { $ne: 'cancelado' },
-    });
+    const choque = await buscarSolapado(match.fecha, { arbitro: arbitro._id }, match._id);
     if (choque) {
-      return res.status(409).json({ success: false, message: 'El árbitro ya tiene un partido a esa misma hora' });
+      return res.status(409).json({ success: false, message: 'El árbitro ya tiene un partido en ese horario (los partidos duran unos 90 minutos)' });
     }
 
     match.arbitro = arbitro._id;
@@ -286,6 +296,13 @@ exports.rescheduleMatch = async (req, res, next) => {
     const nuevaFecha = req.body.fecha ? new Date(req.body.fecha) : match.fecha;
     const nuevoEscenario = req.body.escenario || match.escenario;
 
+    if (Number.isNaN(nuevaFecha.getTime())) {
+      return res.status(400).json({ success: false, message: 'La fecha indicada no es válida' });
+    }
+    if (nuevaFecha.getTime() < Date.now()) {
+      return res.status(400).json({ success: false, message: 'La fecha de reprogramación no puede estar en el pasado' });
+    }
+
     if (nuevaFecha.getTime() === match.fecha.getTime() && nuevoEscenario === match.escenario) {
       return res.status(400).json({ success: false, message: 'La fecha y el escenario no cambiaron' });
     }
@@ -298,16 +315,11 @@ exports.rescheduleMatch = async (req, res, next) => {
     ];
     if (match.arbitro) condiciones.push({ arbitro: match.arbitro });
 
-    const choque = await Match.findOne({
-      _id: { $ne: match._id },
-      fecha: nuevaFecha,
-      estado: { $ne: 'cancelado' },
-      $or: condiciones,
-    });
+    const choque = await buscarSolapado(nuevaFecha, { $or: condiciones }, match._id);
     if (choque) {
       return res.status(409).json({
         success: false,
-        message: 'Conflicto de horario: el escenario, un equipo o el árbitro ya están ocupados a esa hora',
+        message: 'Conflicto de horario: el escenario, un equipo o el árbitro ya están ocupados en ese horario (los partidos duran unos 90 minutos)',
       });
     }
 

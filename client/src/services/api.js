@@ -93,3 +93,40 @@ export const updateProfile = (datos) =>
 // Estadísticas individuales de un jugador (públicas)
 export const getPlayerStats = (userId, params = {}) =>
   api.get(`/matches/players/${userId}/stats`, { params }).then((res) => res.data);
+
+// Gestión de torneos (organizador / administrador)
+export const createTournament = (datos) =>
+  api.post('/tournaments', datos).then((res) => res.data);
+
+export const updateTournamentStatus = (id, estado) =>
+  api.patch(`/tournaments/${id}/status`, { estado }).then((res) => res.data);
+
+export const getRegistrations = (torneoId, params = {}) =>
+  api.get(`/tournaments/${torneoId}/registrations`, { params }).then((res) => res.data);
+
+export const reviewRegistration = (torneoId, regId, datos) =>
+  api.patch(`/tournaments/${torneoId}/registrations/${regId}`, datos).then((res) => res.data);
+
+export const generateFixture = (torneoId, datos = {}) =>
+  api.post(`/tournaments/${torneoId}/fixture`, datos).then((res) => res.data);
+
+export const publishFixture = (torneoId) =>
+  api.post(`/tournaments/${torneoId}/fixture/publish`).then((res) => res.data);
+
+export const discardFixture = (torneoId) =>
+  api.delete(`/tournaments/${torneoId}/fixture`).then((res) => res.data);
+
+// Partidos
+export const rescheduleMatch = (matchId, datos) =>
+  api.patch(`/matches/${matchId}/reschedule`, datos).then((res) => res.data);
+
+export const assignReferee = (matchId, arbitro) =>
+  api.patch(`/matches/${matchId}/referee`, { arbitro }).then((res) => res.data);
+
+// Usuarios (solo administrador)
+export const getUsers = (params = {}) =>
+  api.get('/users', { params }).then((res) => res.data);
+
+// Árbitros activos (organizador / administrador)
+export const getReferees = () =>
+  api.get('/users/referees').then((res) => res.data);

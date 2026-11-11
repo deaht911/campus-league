@@ -38,6 +38,21 @@ export default function Navbar() {
               Mi Equipo
             </Link>
           )}
+          {user && hasRole('organizador', 'administrador') && (
+            <Link to="/panel/organizador" className="hover:text-white">
+              Organizador
+            </Link>
+          )}
+          {user && hasRole('arbitro', 'administrador') && (
+            <Link to="/panel/arbitro" className="hover:text-white">
+              Árbitro
+            </Link>
+          )}
+          {user && hasRole('administrador') && (
+            <Link to="/panel/admin" className="hover:text-white">
+              Administración
+            </Link>
+          )}
         </div>
 
         <div className="flex items-center gap-3">
