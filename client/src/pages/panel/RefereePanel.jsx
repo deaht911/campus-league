@@ -45,23 +45,25 @@ function Contador({ etiqueta, valor, onChange, max = 99 }) {
   );
 }
 
-function TablaEquipo({ titulo, equipoId, jugadores, filas, onFila }) {
+function TablaEquipo({ titulo, equipoId, jugadores, filas, onFila, unidad, conTarjetas }) {
   const total = jugadores.reduce((acc, j) => acc + (filas[j.id]?.goles || 0), 0);
   return (
     <div className="overflow-hidden rounded-xl border border-[#24405f]">
       <div className="flex items-center justify-between bg-[#1a2f4f] px-4 py-2">
         <h3 className="text-sm font-semibold text-white">{titulo}</h3>
-        <span className="text-xs text-[#34E08F]">Goles individuales: {total}</span>
+        <span className="text-xs text-[#34E08F]">
+          Total {unidad.toLowerCase()}: {total}
+        </span>
       </div>
       <div className="table-wrap rounded-none border-0">
         <table className="table-dark">
           <thead>
             <tr>
               <th>Jugador</th>
-              <th className="text-center">Goles</th>
+              <th className="text-center">{unidad}</th>
               <th className="text-center">Faltas</th>
-              <th className="text-center">Amarillas</th>
-              <th className="text-center">Rojas</th>
+              {conTarjetas && <th className="text-center">Amarillas</th>}
+              {conTarjetas && <th className="text-center">Rojas</th>}
               <th className="text-center">Destacado</th>
             </tr>
           </thead>
@@ -73,24 +75,26 @@ function TablaEquipo({ titulo, equipoId, jugadores, filas, onFila }) {
                 <tr key={j.id}>
                   <td className="font-semibold text-white">
                     {j.camiseta !== undefined && j.camiseta !== null && (
-                      <span className="mr-2 inline-block min-w-7 rounded bg-[#0B2545] px-1.5 py-0.5 text-center text-xs">
-                        {j.camiseta}
-                      </span>
+                      <span className="mr-2 inline-block min-w-7 rounded bg-[#0B2545] px-1.5 py-0.5 text-center text-xs">{j.camiseta}</span>
                     )}
                     {j.nombre}
                   </td>
                   <td className="text-center">
-                    <Contador etiqueta={`Goles de ${j.nombre}`} valor={f.goles} onChange={(v) => set('goles', v)} />
+                    <Contador etiqueta={`${unidad} de ${j.nombre}`} valor={f.goles} onChange={(v) => set('goles', v)} />
                   </td>
                   <td className="text-center">
                     <Contador etiqueta={`Faltas de ${j.nombre}`} valor={f.faltas} onChange={(v) => set('faltas', v)} />
                   </td>
-                  <td className="text-center">
-                    <Contador etiqueta={`Amarillas de ${j.nombre}`} valor={f.amarillas} max={2} onChange={(v) => set('amarillas', v)} />
-                  </td>
-                  <td className="text-center">
-                    <Contador etiqueta={`Rojas de ${j.nombre}`} valor={f.rojas} max={1} onChange={(v) => set('rojas', v)} />
-                  </td>
+                  {conTarjetas && (
+                    <td className="text-center">
+                      <Contador etiqueta={`Amarillas de ${j.nombre}`} valor={f.amarillas} max={2} onChange={(v) => set('amarillas', v)} />
+                    </td>
+                  )}
+                  {conTarjetas && (
+                    <td className="text-center">
+                      <Contador etiqueta={`Rojas de ${j.nombre}`} valor={f.rojas} max={1} onChange={(v) => set('rojas', v)} />
+                    </td>
+                  )}
                   <td className="text-center">
                     <input
                       type="checkbox"
@@ -110,13 +114,38 @@ function TablaEquipo({ titulo, equipoId, jugadores, filas, onFila }) {
   );
 }
 
+// Disciplinas con estadísticas por jugador: el marcador es la suma automática de lo registrado
+const CON_INDIVIDUAL = ['futsal', 'futbol', 'basquetbol'];
+
+// Recupera lo guardado en un borrador para no perderlo al reabrir el acta
+const filasIniciales = (partido) => {
+  const filas = {};
+  (partido.estadisticas || []).forEach((e) => {
+    const tarjetas = e.tarjetas || [];
+    filas[`${e.equipo}:${e.jugador}`] = {
+      goles: e.goles || 0,
+      faltas: e.faltas || 0,
+      amarillas: tarjetas.filter((t) => t === 'amarilla').length,
+      rojas: tarjetas.filter((t) => t === 'roja').length,
+      destacado: !!e.destacado,
+    };
+  });
+  return filas;
+};
+
 function ActaDigital({ partido, onCerrar, onEnviar }) {
-  const [carga, setCarga] = useState({ listo: false, error: '', local: [], visitante: [] });
+  const disciplina = partido.torneo?.disciplina;
+  const conIndividual = CON_INDIVIDUAL.includes(disciplina);
+  const esBasquet = disciplina === 'basquetbol';
+  const esVoley = disciplina === 'voleibol';
+  const unidad = esBasquet ? 'Puntos' : 'Goles';
+
+  const [carga, setCarga] = useState({ listo: !conIndividual, error: '', local: [], visitante: [] });
   const [marcador, setMarcador] = useState({
     local: partido.marcador?.local || 0,
     visitante: partido.marcador?.visitante || 0,
   });
-  const [filas, setFilas] = useState({});
+  const [filas, setFilas] = useState(() => filasIniciales(partido));
   const [walkover, setWalkover] = useState(false);
   const [ganadorWo, setGanadorWo] = useState('');
   const [motivoWo, setMotivoWo] = useState('');
@@ -127,6 +156,7 @@ function ActaDigital({ partido, onCerrar, onEnviar }) {
   const visitanteId = partido.visitante._id;
 
   useEffect(() => {
+    if (!conIndividual) return undefined;
     let activo = true;
     Promise.all([getTeam(localId), getTeam(visitanteId)])
       .then(([l, v]) => {
@@ -137,13 +167,18 @@ function ActaDigital({ partido, onCerrar, onEnviar }) {
     return () => {
       activo = false;
     };
-  }, [localId, visitanteId]);
+  }, [localId, visitanteId, conIndividual]);
 
-  const cambiarFila = (equipoId, jugadorId, valor) =>
-    setFilas((f) => ({ ...f, [`${equipoId}:${jugadorId}`]: valor }));
+  const cambiarFila = (equipoId, jugadorId, valor) => setFilas((f) => ({ ...f, [`${equipoId}:${jugadorId}`]: valor }));
 
-  const filasEquipo = (equipoId, jugadores) =>
-    Object.fromEntries(jugadores.map((j) => [j.id, filas[`${equipoId}:${j.id}`] || filaVacia()]));
+  const filasEquipo = (equipoId, jugadores) => Object.fromEntries(jugadores.map((j) => [j.id, filas[`${equipoId}:${j.id}`] || filaVacia()]));
+
+  const sumaGoles = (equipoId, jugadores) => jugadores.reduce((acc, j) => acc + (filas[`${equipoId}:${j.id}`]?.goles || 0), 0);
+
+  // Con estadísticas por jugador el marcador se calcula solo; en voleibol se registran los sets
+  const marcadorFinal = conIndividual
+    ? { local: sumaGoles(localId, carga.local), visitante: sumaGoles(visitanteId, carga.visitante) }
+    : marcador;
 
   const construirEstadisticas = () => {
     const out = [];
@@ -151,7 +186,7 @@ function ActaDigital({ partido, onCerrar, onEnviar }) {
       jugadores.forEach((j) => {
         const f = filas[`${equipoId}:${j.id}`];
         if (!f) return;
-        const tarjetas = [...Array(f.amarillas).fill('amarilla'), ...Array(f.rojas).fill('roja')];
+        const tarjetas = esBasquet ? [] : [...Array(f.amarillas).fill('amarilla'), ...Array(f.rojas).fill('roja')];
         if (f.goles || f.faltas || tarjetas.length || f.destacado) {
           out.push({ jugador: j.id, equipo: equipoId, goles: f.goles, faltas: f.faltas, tarjetas, destacado: f.destacado });
         }
@@ -159,9 +194,6 @@ function ActaDigital({ partido, onCerrar, onEnviar }) {
     });
     return out;
   };
-
-  const sumaGoles = (equipoId, jugadores) =>
-    jugadores.reduce((acc, j) => acc + (filas[`${equipoId}:${j.id}`]?.goles || 0), 0);
 
   const enviar = async (borrador) => {
     setError('');
@@ -171,17 +203,20 @@ function ActaDigital({ partido, onCerrar, onEnviar }) {
       if (!motivoWo.trim()) return setError('Indique el motivo del walkover');
       datos = { walkover: true, ganadorWalkover: ganadorWo, motivoWalkover: motivoWo.trim(), borrador };
     } else {
-      datos = { marcador, estadisticas: construirEstadisticas(), borrador };
+      const { local: ml, visitante: mv } = marcadorFinal;
+      if (!borrador && esVoley && (Math.max(ml, mv) !== 3 || Math.min(ml, mv) > 2)) {
+        return setError('En voleibol el ganador debe tener 3 sets y el perdedor 0, 1 o 2');
+      }
+      if (!borrador && (esBasquet || partido.torneo?.formato === 'eliminacion') && ml === mv) {
+        return setError('En este torneo no hay empates: el partido debe tener un ganador para cerrar el acta');
+      }
+      // Con estadísticas por jugador no se envía el marcador: el servidor lo calcula
+      datos = conIndividual ? { estadisticas: construirEstadisticas(), borrador } : { marcador, borrador };
     }
     setEnviando(true);
     const exito = await onEnviar(partido._id, datos, borrador);
     if (!exito) setEnviando(false);
   };
-
-  const descuadre =
-    !walkover &&
-    carga.listo &&
-    (sumaGoles(localId, carga.local) !== marcador.local || sumaGoles(visitanteId, carga.visitante) !== marcador.visitante);
 
   return (
     <div className="rounded-2xl border border-[#00C16E]/40 bg-[#0f1824] p-6">
@@ -204,12 +239,7 @@ function ActaDigital({ partido, onCerrar, onEnviar }) {
       )}
 
       <label className="mt-5 flex items-center gap-2 text-sm text-gray-300">
-        <input
-          type="checkbox"
-          className="h-4 w-4 accent-[#00C16E]"
-          checked={walkover}
-          onChange={(e) => setWalkover(e.target.checked)}
-        />
+        <input type="checkbox" className="h-4 w-4 accent-[#00C16E]" checked={walkover} onChange={(e) => setWalkover(e.target.checked)} />
         Walkover (un equipo no se presentó)
       </label>
 
@@ -229,60 +259,79 @@ function ActaDigital({ partido, onCerrar, onEnviar }) {
             <label htmlFor="wo-motivo" className="label-dark">
               Motivo
             </label>
-            <input
-              id="wo-motivo"
-              className="input-dark"
-              maxLength={300}
-              value={motivoWo}
-              onChange={(e) => setMotivoWo(e.target.value)}
-            />
+            <input id="wo-motivo" className="input-dark" maxLength={300} value={motivoWo} onChange={(e) => setMotivoWo(e.target.value)} />
           </div>
         </div>
       ) : (
         <>
           <div className="mt-5 flex items-center justify-center gap-4">
-            <div className="text-center">
-              <p className="mb-1 text-sm font-semibold text-white">{partido.local.nombre}</p>
-              <Contador etiqueta="Marcador local" valor={marcador.local} onChange={(v) => setMarcador((m) => ({ ...m, local: v }))} />
-            </div>
-            <span className="mt-6 text-xl text-gray-500">-</span>
-            <div className="text-center">
-              <p className="mb-1 text-sm font-semibold text-white">{partido.visitante.nombre}</p>
-              <Contador etiqueta="Marcador visitante" valor={marcador.visitante} onChange={(v) => setMarcador((m) => ({ ...m, visitante: v }))} />
-            </div>
+            {[
+              ['local', partido.local.nombre],
+              ['visitante', partido.visitante.nombre],
+            ].map(([lado, nombre], i) => (
+              <div key={lado} className="flex items-center gap-4">
+                {i === 1 && <span className="mt-6 text-xl text-gray-500">-</span>}
+                <div className="text-center">
+                  <p className="mb-1 text-sm font-semibold text-white">{nombre}</p>
+                  {conIndividual ? (
+                    <span
+                      className="font-display inline-block min-w-16 rounded-lg bg-[#0B2545] px-4 py-2 text-3xl font-bold text-[#34E08F]"
+                      aria-live="polite"
+                      aria-label={`Marcador de ${nombre}`}
+                    >
+                      {marcadorFinal[lado]}
+                    </span>
+                  ) : (
+                    <Contador
+                      etiqueta={`${esVoley ? 'Sets' : 'Marcador'} de ${nombre}`}
+                      valor={marcador[lado]}
+                      max={esVoley ? 3 : 99}
+                      onChange={(v) => setMarcador((m) => ({ ...m, [lado]: v }))}
+                    />
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
+          <p className="mt-3 text-center text-xs text-gray-400">
+            {conIndividual
+              ? `El marcador se calcula solo: es la suma de ${unidad.toLowerCase()} que registre por jugador.`
+              : esVoley
+                ? 'Registre los sets ganados por cada equipo: el ganador debe tener 3 y el perdedor 0, 1 o 2.'
+                : 'Registre el marcador final de cada equipo.'}
+          </p>
 
-          {!carga.listo ? (
-            <p className="mt-4 text-sm text-gray-400" role="status">
-              Cargando plantillas...
-            </p>
-          ) : carga.error ? (
-            <div className="alert-error mt-4" role="alert">
-              {carga.error}
-            </div>
-          ) : (
-            <div className="mt-5 space-y-4">
-              <TablaEquipo
-                titulo={`${partido.local.nombre} (local)`}
-                equipoId={localId}
-                jugadores={carga.local}
-                filas={filasEquipo(localId, carga.local)}
-                onFila={cambiarFila}
-              />
-              <TablaEquipo
-                titulo={`${partido.visitante.nombre} (visitante)`}
-                equipoId={visitanteId}
-                jugadores={carga.visitante}
-                filas={filasEquipo(visitanteId, carga.visitante)}
-                onFila={cambiarFila}
-              />
-              {descuadre && (
-                <p className="text-xs text-amber-400">
-                  Los goles individuales no coinciden con el marcador. Corríjalos para cerrar el acta, o guárdela como borrador.
-                </p>
-              )}
-            </div>
-          )}
+          {conIndividual &&
+            (!carga.listo ? (
+              <p className="mt-4 text-sm text-gray-400" role="status">
+                Cargando plantillas...
+              </p>
+            ) : carga.error ? (
+              <div className="alert-error mt-4" role="alert">
+                {carga.error}
+              </div>
+            ) : (
+              <div className="mt-5 space-y-4">
+                <TablaEquipo
+                  titulo={`${partido.local.nombre} (local)`}
+                  equipoId={localId}
+                  jugadores={carga.local}
+                  filas={filasEquipo(localId, carga.local)}
+                  onFila={cambiarFila}
+                  unidad={unidad}
+                  conTarjetas={!esBasquet}
+                />
+                <TablaEquipo
+                  titulo={`${partido.visitante.nombre} (visitante)`}
+                  equipoId={visitanteId}
+                  jugadores={carga.visitante}
+                  filas={filasEquipo(visitanteId, carga.visitante)}
+                  onFila={cambiarFila}
+                  unidad={unidad}
+                  conTarjetas={!esBasquet}
+                />
+              </div>
+            ))}
         </>
       )}
 
