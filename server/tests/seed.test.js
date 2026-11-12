@@ -18,10 +18,10 @@ const inscripcionesDe = (t) => d.registrations.filter((r) => String(r.torneo) ==
 const sinDuplicados = (lista) => new Set(lista).size === lista.length;
 
 test('Seed: cantidades y estados de los torneos de demostración', () => {
-  assert.equal(d.tournaments.length, 7);
+  assert.equal(d.tournaments.length, 9);
   assert.equal(d.teams.length, 28);
   assert.ok(d.users.length > 150);
-  assert.ok(d.matches.length > 60);
+  assert.ok(d.matches.length > 70);
   const estados = new Set(d.tournaments.map((t) => t.estado));
   for (const e of ['inscripcion', 'inscripcion_cerrada', 'en_curso', 'finalizado', 'cancelado']) assert.ok(estados.has(e), `falta un torneo ${e}`);
   const disciplinas = new Set(d.tournaments.map((t) => t.disciplina));
@@ -149,4 +149,26 @@ test('Seed: es determinista (mismos resultados con la misma semilla)', () => {
   const otro = generarDatosDemo({ hash: HASH, ahora: AHORA });
   const marcadores = (x) => x.matches.map((m) => `${m.marcador.local}-${m.marcador.visitante}`).join(',');
   assert.equal(marcadores(d), marcadores(otro));
+});
+
+test('Seed: el árbitro de demostración tiene actas pendientes de goles, puntos y sets', () => {
+  const arbitro = String(d.cuentas.arbitro._id);
+  const pendientes = d.matches.filter((m) => String(m.arbitro) === arbitro && m.fecha.getTime() < AHORA && m.estado !== 'finalizado');
+  const disciplinaDe = (m) => d.tournaments.find((t) => String(t._id) === String(m.torneo)).disciplina;
+  const porDisciplina = pendientes.reduce((acc, m) => ({ ...acc, [disciplinaDe(m)]: (acc[disciplinaDe(m)] || 0) + 1 }), {});
+  assert.ok(porDisciplina.voleibol >= 3, 'faltan actas de voleibol');
+  assert.equal(porDisciplina.basquetbol, 2);
+  assert.equal(porDisciplina.futsal, 2);
+});
+
+test('Seed: las ligas cortas en curso tienen jornada 1 jugada, jornada 2 por registrar y jornada 3 futura', () => {
+  for (const nombre of ['Liga Express de Baloncesto', 'Copa Relámpago de Futsal']) {
+    const t = torneo(nombre);
+    const ps = partidosDe(t);
+    assert.equal(t.estado, 'en_curso');
+    assert.equal(ps.length, 6);
+    assert.equal(ps.filter((p) => p.jornada === 1 && p.estado === 'finalizado').length, 2);
+    assert.equal(ps.filter((p) => p.jornada === 2 && p.estado === 'programado' && p.fecha.getTime() < AHORA).length, 2);
+    assert.equal(ps.filter((p) => p.jornada === 3 && p.fecha.getTime() > AHORA).length, 2);
+  }
 });

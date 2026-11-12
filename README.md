@@ -73,7 +73,7 @@ Tras `npm run seed`, todas las cuentas tienen la contraseña `Campus2026!`.
 | Administrador | `admin@uab.edu.bo` | Gestión de usuarios y roles, todos los torneos y reportes |
 | Organizador | `organizador@uab.edu.bo` | Futsal, voleibol y fútbol: aprobar inscripciones, publicar el calendario en borrador, reprogramar, asignar árbitros, exportar PDF |
 | Organizador 2 | `organizador2@uab.edu.bo` | Baloncesto y tenis de mesa: lista de espera y torneo cancelado |
-| Árbitro | `arbitro@uab.edu.bo` (también `arbitro2@` y `arbitro3@`) | Tiene actas pendientes y un borrador en el torneo de voleibol |
+| Árbitro | `arbitro@uab.edu.bo` (también `arbitro2@` y `arbitro3@`) | Tiene actas pendientes de voleibol, baloncesto y futsal (el marcador se suma solo) |
 | Capitán | `capitan@uab.edu.bo` | Equipo «Los Tornillos» (futsal): plantilla e inscripciones |
 | Jugador | `jugador@uab.edu.bo` | Perfil con estadísticas individuales |
 
@@ -81,7 +81,7 @@ Los capitanes de los demás equipos (`capitan2@` … `capitan28@uab.edu.bo`) se 
 
 ### Datos cargados por el seed
 
-El seed carga 7 torneos en 5 disciplinas, 28 equipos, unos 190 usuarios y más de 60 partidos, para poder probar el historial completo:
+El seed carga 9 torneos en 5 disciplinas, 28 equipos, unos 190 usuarios y unos 80 partidos, para poder probar el historial completo:
 
 | Torneo | Disciplina y formato | Estado | Qué permite ver |
 |---|---|---|---|

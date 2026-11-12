@@ -478,6 +478,60 @@ const generarDatosDemo = ({ hash, ahora = Date.now(), semilla = 2026 } = {}) => 
     }
   });
 
+  // 4b) Dos ligas cortas EN CURSO (baloncesto y futsal) con actas pendientes para el árbitro de demostración:
+  // permiten probar la suma automática de goles y puntos sin preparar nada.
+  const ligaCorta = ({ nombre, disciplina, equipos, organizador, inicio, escenario, reglamento }) => {
+    const t = crearTorneo({
+      nombre,
+      disciplina,
+      formato: 'liga',
+      fechaInicio: inicio,
+      fechaFin: sumarDias(inicio, 21),
+      inscripcionInicio: sumarDias(inicio, -30),
+      inscripcionFin: sumarDias(inicio, -10),
+      maxEquipos: 8,
+      escenarios: [escenario],
+      reglamento,
+      estado: 'en_curso',
+      calendarioPublicado: true,
+      organizador: organizador._id,
+    });
+    equipos.forEach((e) => inscribir(t, e, 'aprobada', organizador));
+    const cuenta = {};
+    generarLiga(equipos.map((e) => e._id)).forEach((m, idx) => {
+      const k = (cuenta[m.jornada] = (cuenta[m.jornada] || 0) + 1) - 1;
+      const fecha = aHora(sumarDias(inicio, (m.jornada - 1) * 7), HORARIOS[k]);
+      const base = { torneo: t, local: m.local, visitante: m.visitante, jornada: m.jornada, fecha, escenario, disciplina };
+      if (m.jornada === 1) {
+        partido({ ...base, arbitro: arbitros[idx % 3], estado: 'finalizado', resultado: simular(disciplina, m.local, m.visitante, disciplina === 'basquetbol') });
+      } else if (m.jornada === 2) {
+        // Ya se jugaron y esperan el acta del árbitro de demostración
+        partido({ ...base, arbitro: arbitros[0], estado: 'programado' });
+      } else {
+        partido({ ...base, arbitro: arbitros[1 + (idx % 2)], estado: 'programado' });
+      }
+    });
+    return t;
+  };
+  ligaCorta({
+    nombre: 'Liga Express de Baloncesto 2026',
+    disciplina: 'basquetbol',
+    equipos: basquet.slice(0, 4),
+    organizador: org2,
+    inicio: sumarDias(hoy, -10),
+    escenario: 'Gimnasio Central',
+    reglamento: 'Liga corta a una vuelta. Victoria 2 pts, derrota 1. No hay empates.',
+  });
+  ligaCorta({
+    nombre: 'Copa Relámpago de Futsal 2026',
+    disciplina: 'futsal',
+    equipos: futsalNuevos,
+    organizador: org1,
+    inicio: sumarDias(hoy, -8),
+    escenario: 'Cancha techada',
+    reglamento: 'Liga corta a una vuelta. Victoria 3 pts, empate 1.',
+  });
+
   // 5) Copa de fútbol: inscripción cerrada con calendario en BORRADOR (para probar "Publicar")
   const inicioFutbol = sumarDias(hoy, 10);
   const copaFutbol = crearTorneo({
