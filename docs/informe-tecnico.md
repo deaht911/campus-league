@@ -4,9 +4,19 @@
 
 Proyecto Integrador · Segunda entrega: producto implementado y repositorio GitHub
 
-Universidad Adventista de Bolivia · Asignatura: Tecnologías en Internet · Docente: Lic. Víctor Hugo Sarzuri Flores · Vinto, noviembre de 2026
+Universidad Adventista de Bolivia · Carrera de Ingeniería de Sistemas · Asignatura: Tecnologías en Internet · Docente: Lic. Víctor Hugo Sarzuri Flores · Vinto, noviembre de 2026
 
 **Repositorio público: <https://github.com/deaht911/campus-league>**
+
+**Integrantes:** Alcozer Martínez José · Flores Escobar Kevin Abdias · Huarachi Rojas Roger · Ramírez Mamani Samuel Eli
+
+---
+
+## 1. Carátula e información general
+
+Campus League es una aplicación web para organizar los torneos deportivos entre las facultades de la UAB: inscripción de equipos, calendario, actas de partido, tabla de posiciones y reportes. Esta segunda entrega presenta el producto implementado como monorepo, con una SPA en React, una API REST en Express y una base de datos MongoDB. El título, los integrantes, la fecha, la asignatura y el enlace al repositorio público figuran en la carátula.
+
+> **Repositorio público:** <https://github.com/deaht911/campus-league>
 
 Tabla: Integrantes del equipo y responsabilidades
 
@@ -17,18 +27,11 @@ Tabla: Integrantes del equipo y responsabilidades
 | Roger Huarachi Rojas | roger69 | Usuarios, equipos e interfaz. Modelo de equipos, gestión de usuarios y roles, base de OpenAPI, tema oscuro, pantallas de acceso y perfil, recuperación de contraseña, diseño responsivo y datos de demostración |
 | Kevin Abdias Flores Escobar | Gn_Abdias | Seguridad y servicios. Modelos de torneos e inscripciones, JWT, RBAC y errores, CRUD de equipos, portal público, panel del organizador, correo, reportes PDF, cifrado AES-256 y llaves del torneo |
 
----
-
-## 1. Carátula e información general
-
-Campus League es una aplicación web para organizar los torneos deportivos entre las facultades de la UAB: inscripción de equipos, calendario, actas de partido, tabla de posiciones y reportes. Esta segunda entrega presenta el producto implementado como monorepo, con una SPA en React, una API REST en Express y una base de datos MongoDB. El título, los integrantes, la fecha, la asignatura y el enlace al repositorio público figuran en la carátula.
-
-> **Repositorio público:** <https://github.com/deaht911/campus-league>
-
 Tabla: Ficha del proyecto
 
 | Elemento | Detalle |
 |---|---|
+| Carrera | Ingeniería de Sistemas |
 | Asignatura | Tecnologías en Internet |
 | Docente | Lic. Víctor Hugo Sarzuri Flores |
 | Fecha | Noviembre de 2026 |
