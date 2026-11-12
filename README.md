@@ -88,6 +88,8 @@ El seed carga 9 torneos en 5 disciplinas, 28 equipos, unos 190 usuarios y unos 8
 | Liga Universitaria de Futsal 2025/2026 | Futsal, liga (8 equipos) | **Finalizado** | Tabla final, campeón, goleadores, resultados de 28 partidos |
 | Torneo Intercarreras de Baloncesto 2026 | Baloncesto, eliminación directa | **Finalizado** | Cuartos, semifinales, final y tercer puesto, con campeón |
 | Liga de Voleibol Apertura 2026 | Voleibol, liga (6 equipos) | En curso | Resultados parciales, actas pendientes y partidos futuros |
+| Liga Express de Baloncesto 2026 | Baloncesto, liga (4 equipos) | En curso | Actas pendientes con puntos por jugador: el marcador se suma solo |
+| Copa Relámpago de Futsal 2026 | Futsal, liga (4 equipos) | En curso | Actas pendientes con goles por jugador: el marcador se suma solo |
 | Copa Fútbol 11 Clausura 2026 | Fútbol, liga (6 equipos) | Inscripción cerrada | Calendario en borrador, listo para publicar |
 | Copa UAB 2026 | Futsal, liga | Inscripción abierta | 3 inscripciones aprobadas y 1 pendiente |
 | Copa Baloncesto 2027 | Baloncesto, liga (4 cupos) | Inscripción abierta | Inscripciones pendientes y lista de espera |
