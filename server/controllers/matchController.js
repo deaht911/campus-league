@@ -470,8 +470,16 @@ exports.registerResult = async (req, res, next) => {
       match.marcador = presente === String(match.local) ? { local: 3, visitante: 0 } : { local: 0, visitante: 3 };
       match.estadisticas = [];
     } else {
-      if (!marcador || marcador.local === undefined || marcador.visitante === undefined) {
-        return res.status(400).json({ success: false, message: 'Debe registrar el marcador de ambos equipos' });
+      const reglas = obtenerReglas(torneo.disciplina);
+      const conIndividual = reglas.individual.activo;
+      const marcadorIndicado = !!marcador && marcador.local !== undefined && marcador.visitante !== undefined;
+
+      // Voleibol y otras disciplinas sin estadísticas por jugador exigen el marcador (sets)
+      if (!conIndividual && !marcadorIndicado) {
+        return res.status(400).json({
+          success: false,
+          message: torneo.disciplina === 'voleibol' ? 'Registre los sets ganados por cada equipo' : 'Debe registrar el marcador de ambos equipos',
+        });
       }
 
       const equipos = await Team.find({ _id: { $in: [match.local, match.visitante] } });
@@ -498,20 +506,41 @@ exports.registerResult = async (req, res, next) => {
 
       match.walkover = false;
       match.motivoWalkover = undefined;
-      match.marcador = { local: marcador.local, visitante: marcador.visitante };
-      match.estadisticas = estadisticas;
+      match.estadisticas = conIndividual ? estadisticas : [];
 
-      if (borrador !== true) {
-        const sumaLocal = match.golesIndividuales(match.local);
-        const sumaVisitante = match.golesIndividuales(match.visitante);
-        if (sumaLocal !== marcador.local || sumaVisitante !== marcador.visitante) {
+      if (conIndividual) {
+        // El marcador es la suma de lo registrado por jugador: es la única fuente de verdad
+        const calculado = {
+          local: match.golesIndividuales(match.local),
+          visitante: match.golesIndividuales(match.visitante),
+        };
+        if (marcadorIndicado && (calculado.local !== marcador.local || calculado.visitante !== marcador.visitante)) {
           return res.status(400).json({
             success: false,
-            message: 'Los goles individuales no coinciden con el marcador. Corrija el acta antes de cerrarla',
+            message: `El marcador enviado no coincide con la suma de ${reglas.individual.campo.toLowerCase()} por jugador. Omita el marcador y se calculará automáticamente`,
             diferencia: {
-              local: { marcador: marcador.local, individuales: sumaLocal },
-              visitante: { marcador: marcador.visitante, individuales: sumaVisitante },
+              local: { marcador: marcador.local, individuales: calculado.local },
+              visitante: { marcador: marcador.visitante, individuales: calculado.visitante },
             },
+          });
+        }
+        match.marcador = calculado;
+      } else {
+        match.marcador = { local: marcador.local, visitante: marcador.visitante };
+      }
+
+      if (borrador !== true) {
+        const { local: ml, visitante: mv } = match.marcador;
+        if (torneo.disciplina === 'voleibol' && (Math.max(ml, mv) !== 3 || Math.min(ml, mv) > 2)) {
+          return res.status(400).json({
+            success: false,
+            message: 'En voleibol el ganador debe tener 3 sets y el perdedor 0, 1 o 2',
+          });
+        }
+        if ((torneo.disciplina === 'basquetbol' || torneo.formato === 'eliminacion') && ml === mv) {
+          return res.status(400).json({
+            success: false,
+            message: 'En este torneo no hay empates: el partido debe tener un ganador para cerrar el acta',
           });
         }
       }
@@ -525,12 +554,18 @@ exports.registerResult = async (req, res, next) => {
     }
     await match.save();
 
-    if (match.estado === 'finalizado' && torneo.formato === 'liga') {
-      const pendientes = await Match.countDocuments({
-        torneo: torneo._id,
-        estado: { $nin: ['finalizado', 'cancelado'] },
-      });
-      if (pendientes === 0) {
+    if (match.estado === 'finalizado') {
+      if (torneo.formato === 'liga') {
+        const pendientes = await Match.countDocuments({
+          torneo: torneo._id,
+          estado: { $nin: ['finalizado', 'cancelado'] },
+        });
+        if (pendientes === 0) {
+          torneo.estado = 'finalizado';
+          await torneo.save();
+        }
+      } else if (match.fase === 'final') {
+        // En eliminación directa el torneo termina al cerrarse la final
         torneo.estado = 'finalizado';
         await torneo.save();
       }

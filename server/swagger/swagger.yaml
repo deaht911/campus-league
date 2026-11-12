@@ -1445,7 +1445,13 @@ paths:
     put:
       tags: [Matches]
       summary: Registrar resultado y cerrar el acta digital (CU-09, RF-011)
-      description: Solo el árbitro asignado o un administrador. Los goles individuales deben coincidir con el marcador.
+      description: >
+        Solo el árbitro asignado o un administrador. En fútbol, futsal y baloncesto el marcador se calcula
+        automáticamente como la suma de goles o puntos registrados por jugador (el campo `marcador` es opcional
+        y, si se envía, debe coincidir). En voleibol se envían los sets ganados (el ganador debe tener 3 y el
+        perdedor 0, 1 o 2). En baloncesto y en eliminación directa no se admiten empates. Con `borrador: true`
+        se guarda sin cerrar. Con `walkover: true` el equipo presente gana 3-0. Al cerrar la final de un torneo
+        de eliminación directa, o el último partido de una liga, el torneo pasa a finalizado.
       security:
         - bearerAuth: []
       requestBody:
